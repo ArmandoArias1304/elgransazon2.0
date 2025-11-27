@@ -40,7 +40,10 @@ CREATE TABLE IF NOT EXISTS employee_roles (
 INSERT INTO roles (nombre_rol) VALUES 
 ('ROLE_ADMIN'),
 ('ROLE_WAITER'),
-('ROLE_CHEF')
+('ROLE_CHEF'),
+('ROLE_MANAGER'),
+('ROLE_CASHIER'),
+('ROLE_DELIVERY')
 ON DUPLICATE KEY UPDATE nombre_rol = VALUES(nombre_rol);
 
 -- Insert sample employees with BCrypt hashed password 'password123'
