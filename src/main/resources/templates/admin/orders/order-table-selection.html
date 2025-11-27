@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>El Gran Sazón - Seleccionar Mesa</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@300;400;500;600;700"
+      rel="stylesheet"
+    />
+    
+    <!-- Sistema de Temas (Modo Claro/Oscuro) -->
+    <div th:replace="~{fragments/theme :: themeResources}"></div>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              primary: "#38e07b",
+              "primary-dark": "#2bc866",
+              "background-light": "#f8faf9",
+              "background-dark": "#0f1713",
+              "status-available-bg": "rgba(0, 195, 102, 0.1)",
+              "status-available-text": "#00c366",
+              "status-occupied-bg": "rgba(247, 144, 9, 0.1)",
+              "status-occupied-text": "#f79009",
+              "status-reserved-bg": "rgba(240, 68, 56, 0.1)",
+              "status-reserved-text": "#f04438",
+              "status-can-occupy-bg": "rgba(245, 158, 11, 0.1)",
+              "status-can-occupy-text": "#f59e0b",
+            },
+            fontFamily: {
+              display: ["Work Sans"],
+            },
+            borderRadius: {
+              DEFAULT: "0.5rem",
+              lg: "0.75rem",
+              xl: "1rem",
+              "2xl": "1.5rem",
+              full: "9999px",
+            },
+            boxShadow: {
+              "table-available":
+                "0 0 0 4px rgba(0, 195, 102, 0.2), 0 1px 2px 0 rgba(0,0,0,0.05)",
+              "table-occupied":
+                "0 0 0 4px rgba(247, 144, 9, 0.2), 0 1px 2px 0 rgba(0,0,0,0.05)",
+              "table-reserved":
+                "0 0 0 4px rgba(240, 68, 56, 0.2), 0 1px 2px 0 rgba(0,0,0,0.05)",
+              "table-can-occupy":
+                "0 0 0 4px rgba(245, 158, 11, 0.2), 0 1px 2px 0 rgba(0,0,0,0.05)",
+            },
+          },
+        },
+      };
+    </script>
+    <!-- Sidebar Styles Fragment -->
+    <div th:replace="~{fragments/sidebar :: sidebarStyles}"></div>
+  </head>
+  <body
+    class="bg-gradient-to-br from-background-light to-gray-50 dark:from-background-dark dark:to-gray-900 font-display text-gray-800 dark:text-gray-200 overflow-hidden"
+  >
+    <!-- Menu Controls Fragment -->
+    <div th:replace="~{fragments/sidebar :: menuControls}"></div>
+
+    <div class="flex min-h-screen h-screen overflow-hidden">
+      <!-- SIDEBAR - Using Fragment -->
+      <div
+        th:replace="~{fragments/sidebar :: sidebar(activeMenu='create-order')}"
+      ></div>
+
+      <!-- MAIN CONTENT -->
+      <main class="flex-1 overflow-y-auto h-screen">
+        <div class="p-4 sm:p-6 lg:p-8 pt-20 lg:pt-8">
+          <!-- HEADER -->
+          <div class="mb-6 sm:mb-8">
+            <div class="flex items-center gap-3 mb-4">
+              <a
+                th:href="@{/admin/orders}"
+                class="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
+              >
+                <span class="material-symbols-outlined">arrow_back</span>
+                <span class="text-sm font-medium">Volver a Pedidos</span>
+              </a>
+            </div>
+
+            <h2
+              class="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 dark:text-white mb-2"
+            >
+              Nuevo Pedido - Seleccionar Mesa
+            </h2>
+            <p class="text-sm sm:text-base text-gray-600 dark:text-gray-400">
+              Selecciona una mesa disponible para comenzar el pedido
+            </p>
+          </div>
+
+          <!-- Quick Actions -->
+          <div class="mb-6 sm:mb-8 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- Para Llevar -->
+            <a
+              th:href="@{/admin/orders/customer-info?orderType=TAKEOUT}"
+              class="group relative overflow-hidden rounded-2xl border-2 border-purple-200 dark:border-purple-800 bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 p-6 hover:shadow-xl hover:shadow-purple-500/20 transition-all duration-300"
+            >
+              <div class="flex items-center gap-4">
+                <div
+                  class="flex-shrink-0 w-16 h-16 rounded-2xl bg-purple-500 flex items-center justify-center group-hover:scale-110 transition-transform"
+                >
+                  <span class="material-symbols-outlined text-white text-4xl"
+                    >shopping_bag</span
+                  >
+                </div>
+                <div class="flex-1">
+                  <h3
+                    class="text-xl font-bold text-gray-900 dark:text-white mb-1"
+                  >
+                    Para Llevar
+                  </h3>
+                  <p class="text-sm text-gray-600 dark:text-gray-400">
+                    Pedido para recoger en el restaurante
+                  </p>
+                </div>
+                <span
+                  class="material-symbols-outlined text-purple-500 group-hover:translate-x-2 transition-transform"
+                  >arrow_forward</span
+                >
+              </div>
+            </a>
+
+            <!-- Delivery -->
+            <a
+              th:href="@{/admin/orders/customer-info?orderType=DELIVERY}"
+              class="group relative overflow-hidden rounded-2xl border-2 border-orange-200 dark:border-orange-800 bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-900/20 dark:to-orange-800/20 p-6 hover:shadow-xl hover:shadow-orange-500/20 transition-all duration-300"
+            >
+              <div class="flex items-center gap-4">
+                <div
+                  class="flex-shrink-0 w-16 h-16 rounded-2xl bg-orange-500 flex items-center justify-center group-hover:scale-110 transition-transform"
+                >
+                  <span class="material-symbols-outlined text-white text-4xl"
+                    >local_shipping</span
+                  >
+                </div>
+                <div class="flex-1">
+                  <h3
+                    class="text-xl font-bold text-gray-900 dark:text-white mb-1"
+                  >
+                    Entrega a Domicilio
+                  </h3>
+                  <p class="text-sm text-gray-600 dark:text-gray-400">
+                    Delivery a la dirección del cliente
+                  </p>
+                </div>
+                <span
+                  class="material-symbols-outlined text-orange-500 group-hover:translate-x-2 transition-transform"
+                  >arrow_forward</span
+                >
+              </div>
+            </a>
+          </div>
+
+          <!-- Divider -->
+          <div class="relative mb-8">
+            <div class="absolute inset-0 flex items-center">
+              <div
+                class="w-full border-t border-gray-200 dark:border-gray-700"
+              ></div>
+            </div>
+            <div class="relative flex justify-center">
+              <span
+                class="px-4 bg-background-light dark:bg-background-dark text-sm font-medium text-gray-500 dark:text-gray-400"
+              >
+                o selecciona una mesa para comer aquí
+              </span>
+            </div>
+          </div>
+
+          <!-- STATS -->
+          <div
+            class="mb-6 sm:mb-8 grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6"
+          >
+            <div
+              class="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-4 sm:p-6 shadow-lg"
+            >
+              <div class="flex items-center justify-between mb-3">
+                <h3
+                  class="text-sm font-medium text-gray-600 dark:text-gray-400"
+                >
+                  Disponibles
+                </h3>
+                <div
+                  class="w-10 h-10 rounded-xl bg-green-100 dark:bg-green-900/30 flex items-center justify-center"
+                >
+                  <span class="material-symbols-outlined text-green-600 text-xl"
+                    >check_circle</span
+                  >
+                </div>
+              </div>
+              <p
+                class="text-3xl font-bold text-gray-900 dark:text-white"
+                th:text="${availableCount}"
+              >
+                0
+              </p>
+            </div>
+
+            <div
+              class="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-4 sm:p-6 shadow-lg"
+            >
+              <div class="flex items-center justify-between mb-3">
+                <h3
+                  class="text-sm font-medium text-gray-600 dark:text-gray-400"
+                >
+                  Ocupadas
+                </h3>
+                <div
+                  class="w-10 h-10 rounded-xl bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center"
+                >
+                  <span
+                    class="material-symbols-outlined text-orange-600 text-xl"
+                    >group</span
+                  >
+                </div>
+              </div>
+              <p
+                class="text-3xl font-bold text-gray-900 dark:text-white"
+                th:text="${occupiedCount}"
+              >
+                0
+              </p>
+            </div>
+
+            <div
+              class="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-4 sm:p-6 shadow-lg"
+            >
+              <div class="flex items-center justify-between mb-3">
+                <h3
+                  class="text-sm font-medium text-gray-600 dark:text-gray-400"
+                >
+                  Reservadas
+                </h3>
+                <div
+                  class="w-10 h-10 rounded-xl bg-red-100 dark:bg-red-900/30 flex items-center justify-center"
+                >
+                  <span class="material-symbols-outlined text-red-600 text-xl"
+                    >event</span
+                  >
+                </div>
+              </div>
+              <p
+                class="text-3xl font-bold text-gray-900 dark:text-white"
+                th:text="${reservedCount}"
+              >
+                0
+              </p>
+            </div>
+
+            <div
+              class="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-4 sm:p-6 shadow-lg"
+            >
+              <div class="flex items-center justify-between mb-3">
+                <h3
+                  class="text-sm font-medium text-gray-600 dark:text-gray-400"
+                >
+                  Total Mesas
+                </h3>
+                <div
+                  class="w-10 h-10 rounded-xl bg-primary/10 dark:bg-primary/20 flex items-center justify-center"
+                >
+                  <span class="material-symbols-outlined text-primary text-xl"
+                    >table_restaurant</span
+                  >
+                </div>
+              </div>
+              <p
+                class="text-3xl font-bold text-gray-900 dark:text-white"
+                th:text="${totalCount}"
+              >
+                0
+              </p>
+            </div>
+          </div>
+
+          <!-- TABLES SECTION -->
+          <div
+            class="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-lg overflow-hidden"
+          >
+            <div
+              class="p-4 sm:p-6 border-b border-gray-200 dark:border-gray-800"
+            >
+              <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-4">
+                Selecciona una Mesa
+              </h3>
+              <div class="flex flex-wrap gap-4 text-sm">
+                <div class="flex items-center gap-2">
+                  <div class="w-3 h-3 rounded-full bg-green-500"></div>
+                  <span class="text-gray-600 dark:text-gray-400"
+                    >Disponible</span
+                  >
+                </div>
+                <div class="flex items-center gap-2">
+                  <div class="w-3 h-3 rounded-full bg-amber-500"></div>
+                  <span class="text-gray-600 dark:text-gray-400"
+                    >Puede Ocuparse</span
+                  >
+                </div>
+                <div class="flex items-center gap-2">
+                  <div class="w-3 h-3 rounded-full bg-orange-500"></div>
+                  <span class="text-gray-600 dark:text-gray-400">Ocupada</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <div class="w-3 h-3 rounded-full bg-red-500"></div>
+                  <span class="text-gray-600 dark:text-gray-400"
+                    >Reservada</span
+                  >
+                </div>
+              </div>
+            </div>
+
+            <div class="p-4 sm:p-6">
+              <div
+                class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4"
+              >
+                <!-- Table Card -->
+                <div
+                  th:each="table : ${tables}"
+                  th:with="canOccupy=${canBeOccupiedMap.get(table.id)}"
+                  th:data-table-id="${table.id}"
+                  th:data-table-number="${table.tableNumber}"
+                  th:data-table-status="${table.status.name()}"
+                  th:data-can-occupy="${canOccupy}"
+                  th:classappend="${table.status.name() == 'AVAILABLE' || canOccupy} ? 'table-available cursor-pointer' : 
+                                 'opacity-60 cursor-not-allowed'"
+                  class="table-card group bg-gradient-to-br from-white to-gray-50 dark:from-gray-900 dark:to-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-800 transition-all duration-300"
+                  th:attrappend="class=${table.status.name() == 'AVAILABLE'} ? ' hover:shadow-table-available hover:-translate-y-1' : 
+                                       (${canOccupy} ? ' hover:shadow-table-can-occupy hover:-translate-y-1' :
+                                       (${table.status.name() == 'OCCUPIED'} ? ' hover:shadow-table-occupied' : 
+                                       (${table.status.name() == 'RESERVED'} ? ' hover:shadow-table-reserved' : '')))"
+                >
+                  <div
+                    class="p-5 flex flex-col items-center justify-center text-center"
+                  >
+                    <!-- Icon with pulse animation for available tables -->
+                    <div
+                      class="relative mb-3"
+                      th:if="${table.status.name() == 'AVAILABLE'}"
+                    >
+                      <span
+                        class="material-symbols-outlined text-5xl text-status-available-text"
+                        >table_restaurant</span
+                      >
+                      <span class="absolute -top-1 -right-1 flex h-3 w-3">
+                        <span
+                          class="animate-ping absolute inline-flex h-full w-full rounded-full bg-status-available-text opacity-75"
+                        ></span>
+                        <span
+                          class="relative inline-flex rounded-full h-3 w-3 bg-status-available-text"
+                        ></span>
+                      </span>
+                    </div>
+
+                    <!-- Icon for can occupy -->
+                    <span
+                      th:if="${canOccupy && table.status.name() != 'AVAILABLE'}"
+                      class="material-symbols-outlined text-5xl text-status-can-occupy-text mb-3"
+                      >schedule</span
+                    >
+
+                    <!-- Icon for occupied -->
+                    <span
+                      th:if="${table.status.name() == 'OCCUPIED' && !canOccupy}"
+                      class="material-symbols-outlined text-5xl text-status-occupied-text mb-3"
+                      >group</span
+                    >
+
+                    <!-- Icon for reserved -->
+                    <span
+                      th:if="${table.status.name() == 'RESERVED' && !canOccupy}"
+                      class="material-symbols-outlined text-5xl text-status-reserved-text mb-3"
+                      >event_seat</span
+                    >
+
+                    <!-- Icon for out of service -->
+                    <span
+                      th:if="${table.status.name() == 'OUT_OF_SERVICE'}"
+                      class="material-symbols-outlined text-5xl text-gray-500 mb-3"
+                      >block</span
+                    >
+
+                    <!-- Table Number -->
+                    <h3
+                      class="font-bold text-xl tracking-tight text-gray-900 dark:text-white"
+                      th:text="'Mesa ' + ${table.tableNumber}"
+                    >
+                      Mesa 1
+                    </h3>
+
+                    <!-- Capacity -->
+                    <p
+                      class="text-sm text-gray-600 dark:text-gray-400 mb-4"
+                      th:text="${table.capacity} + ' personas'"
+                    >
+                      4 personas
+                    </p>
+
+                    <!-- Status Badge -->
+                    <span
+                      th:if="${table.status.name() == 'AVAILABLE'}"
+                      class="px-3 py-1 text-xs font-medium rounded-full bg-status-available-bg text-status-available-text"
+                      >Disponible</span
+                    >
+                    <span
+                      th:if="${canOccupy && table.status.name() != 'AVAILABLE'}"
+                      class="px-3 py-1 text-xs font-medium rounded-full bg-status-can-occupy-bg text-status-can-occupy-text"
+                      >Puede Ocuparse</span
+                    >
+                    <span
+                      th:if="${table.status.name() == 'OCCUPIED' && !canOccupy}"
+                      class="px-3 py-1 text-xs font-medium rounded-full bg-status-occupied-bg text-status-occupied-text"
+                      >Ocupada</span
+                    >
+                    <span
+                      th:if="${table.status.name() == 'RESERVED' && !canOccupy}"
+                      class="px-3 py-1 text-xs font-medium rounded-full bg-status-reserved-bg text-status-reserved-text"
+                      >Reservada</span
+                    >
+                    <span
+                      th:if="${table.status.name() == 'OUT_OF_SERVICE'}"
+                      class="px-3 py-1 text-xs font-medium rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400"
+                      >Fuera de Servicio</span
+                    >
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <!-- Sidebar Scripts Fragment -->
+    <div th:replace="~{fragments/sidebar :: sidebarScripts}"></div>
+
+    <script>
+      // Event listeners for table selection
+      document.addEventListener("DOMContentLoaded", function () {
+        const tableCards = document.querySelectorAll(".table-card");
+
+        tableCards.forEach((card) => {
+          const status = card.getAttribute("data-table-status");
+          const tableId = card.getAttribute("data-table-id");
+          const tableNumber = card.getAttribute("data-table-number");
+          const canOccupy = card.getAttribute("data-can-occupy") === "true";
+
+          card.addEventListener("click", function () {
+            // Allow click if AVAILABLE or if reserved but can be occupied now
+            if (status === "AVAILABLE" || canOccupy) {
+              selectTable(tableId, tableNumber);
+            } else {
+              showTableNotAvailable(status);
+            }
+          });
+        });
+      });
+
+      function selectTable(tableId, tableNumber) {
+        // Redirect to customer info form with DINE_IN type and table pre-selected
+        window.location.href = `/admin/orders/customer-info?orderType=DINE_IN&tableId=${tableId}`;
+      }
+
+      function showTableNotAvailable(status) {
+        let message =
+          "Esta mesa no está disponible en este momento. Por favor selecciona otra mesa.";
+
+        if (status === "OCCUPIED") {
+          message =
+            "Esta mesa está ocupada actualmente. Por favor selecciona otra mesa.";
+        } else if (status === "RESERVED") {
+          message =
+            "Esta mesa está reservada y no puede ocuparse porque no hay suficiente tiempo antes de la próxima reservación.";
+        } else if (status === "OUT_OF_SERVICE") {
+          message =
+            "Esta mesa está fuera de servicio. Por favor selecciona otra mesa.";
+        }
+
+        Swal.fire({
+          icon: "warning",
+          title: "Mesa no disponible",
+          text: message,
+          confirmButtonColor: "#38e07b",
+          confirmButtonText: "Entendido",
+          customClass: {
+            popup: "rounded-2xl",
+            confirmButton: "rounded-xl px-6 py-2.5 font-semibold",
+          },
+        });
+      }
+    </script>
+      
+    <!-- Script del Sistema de Temas -->
+    <div th:replace="~{fragments/theme :: themeScript}"></div>
+  </body>
+</html>

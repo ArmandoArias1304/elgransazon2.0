@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>El Sabor - Plano de Mesas</title>
+    <link crossorigin="" href="https://fonts.gstatic.com/" rel="preconnect" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@300;400;500;600;700"
+      rel="stylesheet"
+    />
+    
+    <!-- Sistema de Temas (Modo Claro/Oscuro) -->
+    <div th:replace="~{fragments/theme :: themeResources}"></div>
+    <script>
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              primary: "#38e07b",
+              "primary-dark": "#2bc866",
+              "background-light": "#f8faf9",
+              "background-dark": "#0f1713",
+              "status-available-bg": "rgba(0, 195, 102, 0.1)",
+              "status-available-text": "#00c366",
+              "status-occupied-bg": "rgba(247, 144, 9, 0.1)",
+              "status-occupied-text": "#f79009",
+              "status-reserved-bg": "rgba(240, 68, 56, 0.1)",
+              "status-reserved-text": "#f04438",
+              "status-bill-requested-bg": "rgba(59, 130, 246, 0.1)",
+              "status-bill-requested-text": "#3b82f6",
+            },
+            fontFamily: {
+              display: ["Work Sans"],
+            },
+            borderRadius: {
+              DEFAULT: "0.5rem",
+              lg: "0.75rem",
+              xl: "1rem",
+              "2xl": "1.5rem",
+              full: "9999px",
+            },
+            boxShadow: {
+              "table-available":
+                "0 0 0 4px rgba(0, 195, 102, 0.2), 0 1px 2px 0 rgba(0,0,0,0.05)",
+              "table-occupied":
+                "0 0 0 4px rgba(247, 144, 9, 0.2), 0 1px 2px 0 rgba(0,0,0,0.05)",
+              "table-reserved":
+                "0 0 0 4px rgba(240, 68, 56, 0.2), 0 1px 2px 0 rgba(0,0,0,0.05)",
+              "table-bill":
+                "0 0 0 4px rgba(59, 130, 246, 0.2), 0 1px 2px 0 rgba(0,0,0,0.05)",
+            },
+          },
+        },
+      };
+    </script>
+    <style>
+      .nav-item {
+        transition: all 0.2s ease;
+        position: relative;
+      }
+
+      .nav-item::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 3px;
+        height: 0;
+        background: #38e07b;
+        border-radius: 0 3px 3px 0;
+        transition: height 0.2s ease;
+      }
+
+      .nav-item:hover::before,
+      .nav-item.active::before {
+        height: 70%;
+      }
+
+      #sidebar.open {
+        transform: translateX(0);
+      }
+
+      #menuOverlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 30;
+      }
+
+      #menuOverlay.show {
+        display: block;
+      }
+
+      .material-symbols-outlined {
+        font-variation-settings: "FILL" 1, "wght" 300, "GRAD" 0, "opsz" 24;
+      }
+    </style>
+  </head>
+  <body
+    class="bg-gradient-to-br from-background-light to-gray-50 dark:from-background-dark dark:to-gray-900 font-display text-gray-800 dark:text-gray-200 overflow-hidden"
+  >
+    <div id="menuOverlay"></div>
+
+    <button
+      id="menuToggle"
+      class="fixed top-4 left-4 z-50 lg:hidden w-12 h-12 bg-white dark:bg-gray-900 rounded-xl shadow-lg flex items-center justify-center"
+    >
+      <span class="material-symbols-outlined text-primary">menu</span>
+    </button>
+
+    <div class="flex min-h-screen h-screen overflow-hidden">
+      <!-- SIDEBAR -->
+      <aside
+        id="sidebar"
+        class="fixed lg:static w-72 h-screen flex-shrink-0 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 shadow-xl transform -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out z-40 flex flex-col"
+      >
+        <div class="flex flex-col h-full overflow-y-auto p-4 sm:p-6">
+          <div class="mb-6 sm:mb-10">
+            <div class="flex items-center gap-3 mb-2">
+              <div
+                class="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-primary to-primary-dark rounded-xl flex items-center justify-center shadow-lg shadow-primary/30"
+              >
+                <span
+                  class="material-symbols-outlined text-white text-xl sm:text-2xl"
+                  >restaurant</span
+                >
+              </div>
+              <div>
+                <h1
+                  class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white"
+                >
+                  El Sabor
+                </h1>
+                <p class="text-xs text-primary font-semibold">
+                  Admin Dashboard
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <nav class="flex flex-col gap-1 flex-1">
+            <a
+              class="nav-item flex items-center gap-3 px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 font-medium text-sm sm:text-base"
+              href="#"
+            >
+              <span class="material-symbols-outlined text-xl">dashboard</span>
+              <span>Dashboard</span>
+            </a>
+            <a
+              class="nav-item flex items-center gap-3 px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 font-medium text-sm sm:text-base"
+              href="#"
+            >
+              <span class="material-symbols-outlined text-xl"
+                >restaurant_menu</span
+              >
+              <span>Menú</span>
+            </a>
+            <a
+              class="nav-item flex items-center gap-3 px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 font-medium text-sm sm:text-base"
+              href="#"
+            >
+              <span class="material-symbols-outlined text-xl"
+                >soup_kitchen</span
+              >
+              <span>Cocina</span>
+            </a>
+            <a
+              class="nav-item flex items-center gap-3 px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 font-medium text-sm sm:text-base"
+              href="#"
+            >
+              <span class="material-symbols-outlined text-xl"
+                >receipt_long</span
+              >
+              <span>Pedidos</span>
+            </a>
+            <a
+              class="nav-item active flex items-center gap-3 px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl bg-gradient-to-r from-primary/20 to-primary/10 text-gray-900 dark:text-white font-semibold text-sm sm:text-base"
+              href="#"
+            >
+              <span class="material-symbols-outlined text-primary text-xl"
+                >table_restaurant</span
+              >
+              <span>Mesas</span>
+            </a>
+            <a
+              class="nav-item flex items-center gap-3 px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 font-medium text-sm sm:text-base"
+              href="#"
+            >
+              <span class="material-symbols-outlined text-xl">event_seat</span>
+              <span>Reservaciones</span>
+            </a>
+            <a
+              class="nav-item flex items-center gap-3 px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 font-medium text-sm sm:text-base"
+              href="#"
+            >
+              <span class="material-symbols-outlined text-xl">group</span>
+              <span>Empleados</span>
+            </a>
+            <a
+              class="nav-item flex items-center gap-3 px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 font-medium text-sm sm:text-base"
+              href="#"
+            >
+              <span class="material-symbols-outlined text-xl"
+                >local_shipping</span
+              >
+              <span>Proveedores</span>
+            </a>
+            <a
+              class="nav-item flex items-center gap-3 px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 font-medium text-sm sm:text-base"
+              href="#"
+            >
+              <span class="material-symbols-outlined text-xl">trending_up</span>
+              <span>Ventas</span>
+            </a>
+            <a
+              class="nav-item flex items-center gap-3 px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 font-medium text-sm sm:text-base"
+              href="#"
+            >
+              <span class="material-symbols-outlined text-xl">bar_chart</span>
+              <span>Reportes</span>
+            </a>
+            <a
+              class="nav-item flex items-center gap-3 px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 font-medium text-sm sm:text-base"
+              href="#"
+            >
+              <span class="material-symbols-outlined text-xl">inventory_2</span>
+              <span>Inventario</span>
+            </a>
+
+            <div
+              class="mt-auto pt-4 border-t border-gray-200 dark:border-gray-800"
+            >
+              <a
+                class="nav-item flex items-center gap-3 px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 font-medium text-sm sm:text-base"
+                href="#"
+              >
+                <span class="material-symbols-outlined text-xl">settings</span>
+                <span>Configuración</span>
+              </a>
+
+              <div
+                class="mt-4 p-3 sm:p-4 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 rounded-xl border border-gray-200 dark:border-gray-700"
+              >
+                <div class="flex items-center gap-3 mb-3">
+                  <div
+                    class="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-primary to-primary-dark rounded-full flex items-center justify-center text-white font-bold text-sm sm:text-base shadow-lg flex-shrink-0"
+                  >
+                    JM
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <p
+                      class="font-semibold text-sm sm:text-base text-gray-900 dark:text-white truncate"
+                    >
+                      Juan Martínez
+                    </p>
+                    <p
+                      class="text-xs text-gray-500 dark:text-gray-400 truncate"
+                    >
+                      Administrador
+                    </p>
+                  </div>
+                </div>
+                <form action="/logout" method="post" style="display: inline; width: 100%;">
+                  <button
+                    type="submit"
+                    class="w-full flex items-center justify-center gap-2 px-3 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg font-medium text-xs sm:text-sm transition-colors shadow-md hover:shadow-lg"
+                  >
+                    <span class="material-symbols-outlined text-lg">logout</span>
+                    <span>Cerrar Sesión</span>
+                  </button>
+                </form>
+              </div>
+            </div>
+          </nav>
+        </div>
+      </aside>
+
+      <!-- MAIN CONTENT -->
+      <main class="flex-1 overflow-y-auto h-screen">
+        <div class="p-4 sm:p-6 lg:p-8 pt-20 lg:pt-8">
+          <!-- HEADER -->
+          <div
+            class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 sm:mb-8 gap-4"
+          >
+            <div>
+              <h2
+                class="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 dark:text-white mb-1"
+              >
+                Plano de Mesas
+              </h2>
+              <p class="text-sm sm:text-base text-gray-600 dark:text-gray-400">
+                Visualiza y gestiona el estado de todas las mesas
+              </p>
+            </div>
+            <button
+              class="flex items-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl bg-gradient-to-r from-primary to-primary-dark text-white font-semibold hover:shadow-lg hover:shadow-primary/30 transition-all shadow-md"
+            >
+              <span class="material-symbols-outlined text-lg"
+                >takeout_dining</span
+              >
+              <span class="text-sm sm:text-base">Pedido para Llevar</span>
+            </button>
+          </div>
+
+          <!-- GRID DE MESAS -->
+          <div
+            class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 sm:gap-6"
+          >
+            <!-- Mesa 1 - Disponible -->
+            <div
+              class="group cursor-pointer bg-gradient-to-br from-white to-gray-50 dark:from-gray-900 dark:to-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-800 hover:shadow-table-available hover:-translate-y-1 transition-all duration-300"
+            >
+              <div
+                class="p-5 flex flex-col items-center justify-center text-center"
+              >
+                <div class="relative mb-3">
+                  <span
+                    class="material-symbols-outlined text-5xl text-status-available-text"
+                    >table_restaurant</span
+                  >
+                  <span class="absolute -top-1 -right-1 flex h-3 w-3">
+                    <span
+                      class="animate-ping absolute inline-flex h-full w-full rounded-full bg-status-available-text opacity-75"
+                    ></span>
+                    <span
+                      class="relative inline-flex rounded-full h-3 w-3 bg-status-available-text"
+                    ></span>
+                  </span>
+                </div>
+                <h3
+                  class="font-bold text-xl tracking-tight text-gray-900 dark:text-white"
+                >
+                  Mesa 1
+                </h3>
+                <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                  4 personas
+                </p>
+                <span
+                  class="px-3 py-1 text-xs font-medium rounded-full bg-status-available-bg text-status-available-text"
+                  >Disponible</span
+                >
+              </div>
+            </div>
+
+            <!-- Mesa 2 - Ocupada -->
+            <div
+              class="group cursor-pointer bg-gradient-to-br from-white to-gray-50 dark:from-gray-900 dark:to-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-800 hover:shadow-table-occupied hover:-translate-y-1 transition-all duration-300"
+            >
+              <div
+                class="p-5 flex flex-col items-center justify-center text-center"
+              >
+                <span
+                  class="material-symbols-outlined text-5xl text-status-occupied-text mb-3"
+                  >table_restaurant</span
+                >
+                <h3
+                  class="font-bold text-xl tracking-tight text-gray-900 dark:text-white"
+                >
+                  Mesa 2
+                </h3>
+                <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                  2 personas
+                </p>
+                <span
+                  class="px-3 py-1 text-xs font-medium rounded-full bg-status-occupied-bg text-status-occupied-text"
+                  >Ocupada</span
+                >
+              </div>
+            </div>
+
+            <!-- Mesa 3 - Reservada -->
+            <div
+              class="group cursor-pointer bg-gradient-to-br from-white to-gray-50 dark:from-gray-900 dark:to-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-800 hover:shadow-table-reserved hover:-translate-y-1 transition-all duration-300"
+            >
+              <div
+                class="p-5 flex flex-col items-center justify-center text-center"
+              >
+                <span
+                  class="material-symbols-outlined text-5xl text-status-reserved-text mb-3"
+                  >event_seat</span
+                >
+                <h3
+                  class="font-bold text-xl tracking-tight text-gray-900 dark:text-white"
+                >
+                  Mesa 3
+                </h3>
+                <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                  6 personas
+                </p>
+                <span
+                  class="px-3 py-1 text-xs font-medium rounded-full bg-status-reserved-bg text-status-reserved-text"
+                  >Reservada</span
+                >
+              </div>
+            </div>
+
+            <!-- Mesa 4 - Cuenta pedida -->
+            <div
+              class="group cursor-pointer bg-gradient-to-br from-white to-gray-50 dark:from-gray-900 dark:to-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-800 hover:shadow-table-bill hover:-translate-y-1 transition-all duration-300"
+            >
+              <div
+                class="p-5 flex flex-col items-center justify-center text-center"
+              >
+                <span
+                  class="material-symbols-outlined text-5xl text-status-bill-requested-text mb-3"
+                  >receipt_long</span
+                >
+                <h3
+                  class="font-bold text-xl tracking-tight text-gray-900 dark:text-white"
+                >
+                  Mesa 4
+                </h3>
+                <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                  2 personas
+                </p>
+                <span
+                  class="px-3 py-1 text-xs font-medium rounded-full bg-status-bill-requested-bg text-status-bill-requested-text"
+                  >Cuenta pedida</span
+                >
+              </div>
+            </div>
+
+            <!-- Mesa 5 - Disponible -->
+            <div
+              class="group cursor-pointer bg-gradient-to-br from-white to-gray-50 dark:from-gray-900 dark:to-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-800 hover:shadow-table-available hover:-translate-y-1 transition-all duration-300"
+            >
+              <div
+                class="p-5 flex flex-col items-center justify-center text-center"
+              >
+                <div class="relative mb-3">
+                  <span
+                    class="material-symbols-outlined text-5xl text-status-available-text"
+                    >table_restaurant</span
+                  >
+                  <span class="absolute -top-1 -right-1 flex h-3 w-3">
+                    <span
+                      class="animate-ping absolute inline-flex h-full w-full rounded-full bg-status-available-text opacity-75"
+                    ></span>
+                    <span
+                      class="relative inline-flex rounded-full h-3 w-3 bg-status-available-text"
+                    ></span>
+                  </span>
+                </div>
+                <h3
+                  class="font-bold text-xl tracking-tight text-gray-900 dark:text-white"
+                >
+                  Mesa 5
+                </h3>
+                <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                  4 personas
+                </p>
+                <span
+                  class="px-3 py-1 text-xs font-medium rounded-full bg-status-available-bg text-status-available-text"
+                  >Disponible</span
+                >
+              </div>
+            </div>
+
+            <!-- Mesa 6 - Disponible -->
+            <div
+              class="group cursor-pointer bg-gradient-to-br from-white to-gray-50 dark:from-gray-900 dark:to-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-800 hover:shadow-table-available hover:-translate-y-1 transition-all duration-300"
+            >
+              <div
+                class="p-5 flex flex-col items-center justify-center text-center"
+              >
+                <div class="relative mb-3">
+                  <span
+                    class="material-symbols-outlined text-5xl text-status-available-text"
+                    >table_restaurant</span
+                  >
+                  <span class="absolute -top-1 -right-1 flex h-3 w-3">
+                    <span
+                      class="animate-ping absolute inline-flex h-full w-full rounded-full bg-status-available-text opacity-75"
+                    ></span>
+                    <span
+                      class="relative inline-flex rounded-full h-3 w-3 bg-status-available-text"
+                    ></span>
+                  </span>
+                </div>
+                <h3
+                  class="font-bold text-xl tracking-tight text-gray-900 dark:text-white"
+                >
+                  Mesa 6
+                </h3>
+                <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                  2 personas
+                </p>
+                <span
+                  class="px-3 py-1 text-xs font-medium rounded-full bg-status-available-bg text-status-available-text"
+                  >Disponible</span
+                >
+              </div>
+            </div>
+
+            <!-- Mesa 7 - Ocupada -->
+            <div
+              class="group cursor-pointer bg-gradient-to-br from-white to-gray-50 dark:from-gray-900 dark:to-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-800 hover:shadow-table-occupied hover:-translate-y-1 transition-all duration-300"
+            >
+              <div
+                class="p-5 flex flex-col items-center justify-center text-center"
+              >
+                <span
+                  class="material-symbols-outlined text-5xl text-status-occupied-text mb-3"
+                  >table_restaurant</span
+                >
+                <h3
+                  class="font-bold text-xl tracking-tight text-gray-900 dark:text-white"
+                >
+                  Mesa 7
+                </h3>
+                <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                  6 personas
+                </p>
+                <span
+                  class="px-3 py-1 text-xs font-medium rounded-full bg-status-occupied-bg text-status-occupied-text"
+                  >Ocupada</span
+                >
+              </div>
+            </div>
+
+            <!-- Mesa 8 - Disponible -->
+            <div
+              class="group cursor-pointer bg-gradient-to-br from-white to-gray-50 dark:from-gray-900 dark:to-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-800 hover:shadow-table-available hover:-translate-y-1 transition-all duration-300"
+            >
+              <div
+                class="p-5 flex flex-col items-center justify-center text-center"
+              >
+                <div class="relative mb-3">
+                  <span
+                    class="material-symbols-outlined text-5xl text-status-available-text"
+                    >table_restaurant</span
+                  >
+                  <span class="absolute -top-1 -right-1 flex h-3 w-3">
+                    <span
+                      class="animate-ping absolute inline-flex h-full w-full rounded-full bg-status-available-text opacity-75"
+                    ></span>
+                    <span
+                      class="relative inline-flex rounded-full h-3 w-3 bg-status-available-text"
+                    ></span>
+                  </span>
+                </div>
+                <h3
+                  class="font-bold text-xl tracking-tight text-gray-900 dark:text-white"
+                >
+                  Mesa 8
+                </h3>
+                <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                  2 personas
+                </p>
+                <span
+                  class="px-3 py-1 text-xs font-medium rounded-full bg-status-available-bg text-status-available-text"
+                  >Disponible</span
+                >
+              </div>
+            </div>
+
+            <!-- Mesa 9 - Disponible -->
+            <div
+              class="group cursor-pointer bg-gradient-to-br from-white to-gray-50 dark:from-gray-900 dark:to-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-800 hover:shadow-table-available hover:-translate-y-1 transition-all duration-300"
+            >
+              <div
+                class="p-5 flex flex-col items-center justify-center text-center"
+              >
+                <div class="relative mb-3">
+                  <span
+                    class="material-symbols-outlined text-5xl text-status-available-text"
+                    >table_restaurant</span
+                  >
+                  <span class="absolute -top-1 -right-1 flex h-3 w-3">
+                    <span
+                      class="animate-ping absolute inline-flex h-full w-full rounded-full bg-status-available-text opacity-75"
+                    ></span>
+                    <span
+                      class="relative inline-flex rounded-full h-3 w-3 bg-status-available-text"
+                    ></span>
+                  </span>
+                </div>
+                <h3
+                  class="font-bold text-xl tracking-tight text-gray-900 dark:text-white"
+                >
+                  Mesa 9
+                </h3>
+                <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                  4 personas
+                </p>
+                <span
+                  class="px-3 py-1 text-xs font-medium rounded-full bg-status-available-bg text-status-available-text"
+                  >Disponible</span
+                >
+              </div>
+            </div>
+
+            <!-- Mesa 10 - Cuenta pedida -->
+            <div
+              class="group cursor-pointer bg-gradient-to-br from-white to-gray-50 dark:from-gray-900 dark:to-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-800 hover:shadow-table-bill hover:-translate-y-1 transition-all duration-300"
+            >
+              <div
+                class="p-5 flex flex-col items-center justify-center text-center"
+              >
+                <span
+                  class="material-symbols-outlined text-5xl text-status-bill-requested-text mb-3"
+                  >receipt_long</span
+                >
+                <h3
+                  class="font-bold text-xl tracking-tight text-gray-900 dark:text-white"
+                >
+                  Mesa 10
+                </h3>
+                <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                  2 personas
+                </p>
+                <span
+                  class="px-3 py-1 text-xs font-medium rounded-full bg-status-bill-requested-bg text-status-bill-requested-text"
+                  >Cuenta pedida</span
+                >
+              </div>
+            </div>
+
+            <!-- Mesa 11 - Reservada -->
+            <div
+              class="group cursor-pointer bg-gradient-to-br from-white to-gray-50 dark:from-gray-900 dark:to-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-800 hover:shadow-table-reserved hover:-translate-y-1 transition-all duration-300"
+            >
+              <div
+                class="p-5 flex flex-col items-center justify-center text-center"
+              >
+                <span
+                  class="material-symbols-outlined text-5xl text-status-reserved-text mb-3"
+                  >event_seat</span
+                >
+                <h3
+                  class="font-bold text-xl tracking-tight text-gray-900 dark:text-white"
+                >
+                  Mesa 11
+                </h3>
+                <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                  6 personas
+                </p>
+                <span
+                  class="px-3 py-1 text-xs font-medium rounded-full bg-status-reserved-bg text-status-reserved-text"
+                  >Reservada</span
+                >
+              </div>
+            </div>
+
+            <!-- Mesa 12 - Disponible -->
+            <div
+              class="group cursor-pointer bg-gradient-to-br from-white to-gray-50 dark:from-gray-900 dark:to-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-800 hover:shadow-table-available hover:-translate-y-1 transition-all duration-300"
+            >
+              <div
+                class="p-5 flex flex-col items-center justify-center text-center"
+              >
+                <div class="relative mb-3">
+                  <span
+                    class="material-symbols-outlined text-5xl text-status-available-text"
+                    >table_restaurant</span
+                  >
+                  <span class="absolute -top-1 -right-1 flex h-3 w-3">
+                    <span
+                      class="animate-ping absolute inline-flex h-full w-full rounded-full bg-status-available-text opacity-75"
+                    ></span>
+                    <span
+                      class="relative inline-flex rounded-full h-3 w-3 bg-status-available-text"
+                    ></span>
+                  </span>
+                </div>
+                <h3
+                  class="font-bold text-xl tracking-tight text-gray-900 dark:text-white"
+                >
+                  Mesa 12
+                </h3>
+                <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                  2 personas
+                </p>
+                <span
+                  class="px-3 py-1 text-xs font-medium rounded-full bg-status-available-bg text-status-available-text"
+                  >Disponible</span
+                >
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <!-- JAVASCRIPT -->
+    <script>
+      const menuToggle = document.getElementById("menuToggle");
+      const sidebar = document.getElementById("sidebar");
+      const menuOverlay = document.getElementById("menuOverlay");
+
+      menuToggle.addEventListener("click", () => {
+        sidebar.classList.toggle("open");
+        menuOverlay.classList.toggle("show");
+      });
+
+      menuOverlay.addEventListener("click", () => {
+        sidebar.classList.remove("open");
+        menuOverlay.classList.remove("show");
+      });
+
+      const navItems = document.querySelectorAll(".nav-item");
+      navItems.forEach((item) => {
+        item.addEventListener("click", () => {
+          if (window.innerWidth < 1024) {
+            sidebar.classList.remove("open");
+            menuOverlay.classList.remove("show");
+          }
+        });
+      });
+    </script>
+      
+    <!-- Script del Sistema de Temas -->
+    <div th:replace="~{fragments/theme :: themeScript}"></div>
+  </body>
+</html>

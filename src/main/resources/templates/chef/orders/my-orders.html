@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>El Gran Sazón - Mis Pedidos</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@300;400;500;600;700"
+      rel="stylesheet"
+    />
+
+    <!-- Sistema de Temas (Modo Claro/Oscuro) -->
+    <div th:replace="~{fragments/theme :: themeResources}"></div>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              primary: "#38e07b",
+              "primary-dark": "#2bc866",
+              "background-light": "#f8faf9",
+            },
+            fontFamily: {
+              display: ["Work Sans"],
+            },
+            borderRadius: {
+              DEFAULT: "0.5rem",
+              lg: "0.75rem",
+              xl: "1rem",
+              "2xl": "1.5rem",
+              full: "9999px",
+            },
+          },
+        },
+      };
+    </script>
+    <style>
+      .material-symbols-outlined {
+        font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24;
+      }
+
+      body {
+        font-family: "Work Sans", sans-serif;
+      }
+    </style>
+  </head>
+  <body
+    class="bg-gradient-to-br from-background-light to-gray-50 dark:from-gray-900 dark:to-gray-800 font-display text-gray-800 dark:text-gray-100"
+  >
+    <div class="flex flex-col min-h-screen">
+      <!-- Header -->
+      <header
+        class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shadow-lg sticky top-0 z-30"
+      >
+        <div class="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+          <div
+            class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
+          >
+            <div class="flex items-center gap-3 sm:gap-4">
+              <div
+                class="w-12 h-12 bg-gradient-to-br from-primary to-primary-dark rounded-xl flex items-center justify-center shadow-lg shadow-primary/30"
+              >
+                <span class="material-symbols-outlined text-white text-2xl"
+                  >history</span
+                >
+              </div>
+              <div>
+                <h1
+                  class="text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white"
+                >
+                  📋 Historial de Pedidos
+                </h1>
+                <p class="text-sm text-gray-600 dark:text-gray-300">
+                  Pedidos completados por la cocina
+                </p>
+              </div>
+            </div>
+            <div class="flex items-center gap-3">
+              <a
+                th:href="@{/chef/orders/pending}"
+                class="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold rounded-xl bg-blue-600 hover:bg-blue-700 text-white hover:shadow-lg hover:shadow-blue-500/30 transition-all"
+              >
+                <span class="material-symbols-outlined">restaurant</span>
+                <span class="hidden sm:inline">Gestionar Pedidos</span>
+              </a>
+              <a
+                th:href="@{/chef/dashboard}"
+                class="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold rounded-xl bg-gradient-to-r from-primary to-primary-dark text-white hover:shadow-lg hover:shadow-primary/30 transition-all"
+              >
+                <span class="material-symbols-outlined">dashboard</span>
+                <span class="hidden sm:inline">Dashboard</span>
+              </a>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <!-- Main Content -->
+      <main
+        class="flex-1 w-full max-w-screen-2xl px-4 py-6 mx-auto sm:px-6 lg:px-8"
+      >
+        <!-- Empty State -->
+        <div
+          th:if="${orders.isEmpty()}"
+          class="flex flex-col items-center justify-center py-16 bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700"
+        >
+          <div
+            class="w-24 h-24 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-600 rounded-2xl flex items-center justify-center mb-6"
+          >
+            <span
+              class="material-symbols-outlined text-6xl text-gray-400 dark:text-gray-300"
+            >
+              restaurant_menu
+            </span>
+          </div>
+          <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+            No hay pedidos completados
+          </h3>
+          <p class="text-gray-600 dark:text-gray-300 mb-6">
+            Los pedidos completados aparecerán aquí
+          </p>
+          <a
+            th:href="@{/chef/orders/pending}"
+            class="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all"
+          >
+            <span class="material-symbols-outlined">restaurant</span>
+            Ir a Gestión de Pedidos
+          </a>
+        </div>
+
+        <!-- Orders Grid -->
+        <div
+          th:if="${!orders.isEmpty()}"
+          class="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4"
+        >
+          <!-- ORDER CARD -->
+          <div
+            th:each="order : ${orders}"
+            class="bg-white dark:bg-gray-800 rounded-3xl shadow-md hover:shadow-2xl flex flex-col overflow-hidden transition-all duration-300 h-[490px]"
+            th:classappend="${order.status.name() == 'READY'} ? 'border-2 border-green-400 dark:border-green-500' : (${order.status.name() == 'DELIVERED'} ? 'border-2 border-purple-400 dark:border-purple-500' : (${order.status.name() == 'CANCELLED'} ? 'border-2 border-red-400 dark:border-red-500' : (${order.status.name() == 'PAID'} ? 'border-2 border-yellow-400 dark:border-yellow-500' : 'border border-gray-300 dark:border-gray-700')))"
+          >
+            <!-- Card Header -->
+            <div
+              class="px-6 py-5 flex justify-between items-center border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 flex-shrink-0"
+            >
+              <div>
+                <h3 class="text-xl font-bold text-gray-900 dark:text-white">
+                  <span
+                    th:if="${order.table != null}"
+                    th:text="'Mesa ' + ${order.table.tableNumber}"
+                  ></span>
+                  <span
+                    th:if="${order.table == null && order.orderType.name() == 'TAKEOUT'}"
+                  >
+                    Para llevar
+                  </span>
+                  <span
+                    th:if="${order.table == null && order.orderType.name() == 'DELIVERY'}"
+                  >
+                    Delivery
+                  </span>
+                  <span
+                    th:if="${order.table == null && order.customerName != null && order.orderType.name() == 'DINE_IN'}"
+                    th:text="${order.customerName}"
+                  ></span>
+                </h3>
+                <p class="text-sm text-gray-600 dark:text-gray-300 font-medium">
+                  Atendido por:
+                  <span
+                    th:text="${order.employee != null ? order.employee.fullName : 'Pedido Web'}"
+                  ></span>
+                </p>
+                <p
+                  class="text-xs text-gray-500 dark:text-gray-400 font-semibold mt-0.5"
+                >
+                  Pedido <span th:text="${order.orderNumber}"></span>
+                </p>
+              </div>
+              <div class="flex flex-col items-end gap-2">
+                <!-- Order Type Badge -->
+                <span
+                  th:if="${order.orderType.name() == 'DINE_IN'}"
+                  class="order-type-badge bg-blue-100 text-blue-800"
+                >
+                  🍽️ Mesa
+                </span>
+                <span
+                  th:if="${order.orderType.name() == 'TAKEOUT'}"
+                  class="order-type-badge bg-orange-100 text-orange-800"
+                >
+                  📦 Llevar
+                </span>
+                <span
+                  th:if="${order.orderType.name() == 'DELIVERY'}"
+                  class="order-type-badge bg-purple-100 text-purple-800"
+                >
+                  🚗 Delivery
+                </span>
+
+                <!-- Status Badge -->
+                <span
+                  th:if="${order.status.name() == 'READY'}"
+                  class="px-5 py-2.5 rounded-full text-sm font-bold inline-flex items-center gap-2 bg-gradient-to-br from-primary to-primary-dark text-white shadow-md"
+                >
+                  <span class="material-symbols-outlined !text-base"
+                    >check_circle</span
+                  >
+                  Listo
+                </span>
+                <span
+                  th:if="${order.status.name() == 'DELIVERED'}"
+                  class="px-5 py-2.5 rounded-full text-sm font-bold inline-flex items-center gap-2 bg-gradient-to-br from-purple-500 to-purple-600 text-white shadow-md"
+                >
+                  <span class="material-symbols-outlined !text-base"
+                    >local_shipping</span
+                  >
+                  Entregado
+                </span>
+                <span
+                  th:if="${order.status.name() == 'PAID'}"
+                  class="px-5 py-2.5 rounded-full text-sm font-bold inline-flex items-center gap-2 bg-gradient-to-br from-yellow-400 to-amber-500 text-white shadow-md"
+                >
+                  <span class="material-symbols-outlined !text-base"
+                    >payments</span
+                  >
+                  Pagado
+                </span>
+                <span
+                  th:if="${order.status.name() == 'CANCELLED'}"
+                  class="px-5 py-2.5 rounded-full text-sm font-bold inline-flex items-center gap-2 bg-gradient-to-br from-red-400 to-red-500 text-white shadow-md"
+                >
+                  <span class="material-symbols-outlined !text-base"
+                    >cancel</span
+                  >
+                  Cancelado
+                </span>
+              </div>
+            </div>
+
+            <!-- Card Body - Order Details -->
+            <div class="p-5 flex-1 overflow-y-auto overflow-x-hidden">
+              <h4
+                class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 uppercase tracking-wide"
+              >
+                Detalles del Pedido:
+              </h4>
+              <div class="space-y-1">
+                <!-- FILTER: Chef only sees items that require preparation -->
+                <div
+                  th:each="detail : ${order.orderDetails}"
+                  th:if="${detail.itemMenu.requiresPreparation == true}"
+                  class="py-4 border-b border-gray-100 dark:border-gray-700 flex flex-col gap-2 last:border-b-0"
+                >
+                  <div class="flex items-center justify-between w-full gap-2">
+                    <p
+                      class="text-base font-semibold text-gray-900 dark:text-white"
+                    >
+                      <span th:text="${detail.quantity} + 'x'"></span>
+                      <span th:text="${detail.itemMenu.name}"></span>
+                    </p>
+                  </div>
+                  <p
+                    th:if="${detail.comments != null && !detail.comments.isEmpty()}"
+                    class="text-sm text-gray-600 dark:text-gray-300 pl-4"
+                  >
+                    💬 <span th:text="${detail.comments}"></span>
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Card Footer -->
+            <div
+              class="p-5 bg-gray-50 dark:bg-gray-900 flex flex-col gap-3 border-t border-gray-100 dark:border-gray-700 flex-shrink-0"
+            >
+              <!-- Server and Time Info -->
+              <div class="text-xs text-gray-600 dark:text-gray-300 space-y-2">
+                <div
+                  class="flex justify-between pb-2 border-b border-gray-200 dark:border-gray-600"
+                >
+                  <span class="font-medium">Levantado por:</span>
+                  <span
+                    class="font-semibold text-gray-900 dark:text-white"
+                    th:text="${order.employee != null ? order.employee.fullName : 'Pedido Web'}"
+                  ></span>
+                </div>
+                <div
+                  class="flex justify-between pb-2 border-b border-gray-200 dark:border-gray-600"
+                >
+                  <span class="font-medium">Preparado por:</span>
+                  <span
+                    class="font-semibold text-primary"
+                    th:text="${order.preparedBy != null ? order.preparedBy.fullName : 'N/A'}"
+                  ></span>
+                </div>
+                <div
+                  th:if="${order.paidBy != null}"
+                  class="flex justify-between pb-2 border-b border-gray-200 dark:border-gray-600"
+                >
+                  <span class="font-medium">Cobrado por:</span>
+                  <span
+                    class="font-semibold text-blue-600 dark:text-blue-400"
+                    th:text="${order.paidBy.fullName}"
+                  ></span>
+                </div>
+                <div
+                  class="flex justify-between pb-2 border-b border-gray-200 dark:border-gray-600"
+                >
+                  <span class="font-medium">Creado:</span>
+                  <span
+                    class="font-semibold text-gray-900 dark:text-white"
+                    th:text="${#temporals.format(order.createdAt, 'HH:mm')}"
+                  ></span>
+                </div>
+                <div class="flex justify-between pb-2">
+                  <span class="font-medium">Tiempo preparación:</span>
+                  <span class="font-semibold text-primary">
+                    <span
+                      th:text="${#temporals.format(order.updatedAt, 'HH:mm')} + ' (' + ${T(java.time.Duration).between(order.createdAt, order.updatedAt).toMinutes()} + ' min)'"
+                    ></span>
+                  </span>
+                </div>
+              </div>
+
+              <!-- Status indicator -->
+              <div
+                class="w-full px-4 py-3 font-semibold rounded-xl text-center border-2 flex items-center justify-center gap-2"
+                th:classappend="${order.status.name() == 'READY'} ? 'bg-green-50 text-green-800 border-green-300' : (${order.status.name() == 'DELIVERED'} ? 'bg-purple-50 text-purple-800 border-purple-300' : (${order.status.name() == 'CANCELLED'} ? 'bg-red-50 text-red-800 border-red-300' : (${order.status.name() == 'PAID'} ? 'bg-yellow-50 text-yellow-800 border-yellow-300' : 'bg-gray-50 text-gray-800 border-gray-300')))"
+              >
+                <span class="material-symbols-outlined"> check_circle </span>
+                <span th:text="${order.status.displayName}">Estado</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <!-- WebSocket Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+    <script>
+      let stompClient = null;
+      let reconnectAttempts = 0;
+      const MAX_RECONNECT_ATTEMPTS = 5;
+      const RECONNECT_DELAY = 3000;
+
+      function connectWebSocket() {
+        const socket = new SockJS("/ws");
+        stompClient = Stomp.over(socket);
+        stompClient.debug = null;
+
+        stompClient.connect(
+          {},
+          function (frame) {
+            console.log("✅ WebSocket Connected (My Orders)");
+            reconnectAttempts = 0;
+
+            // Subscribe to order notifications
+            stompClient.subscribe("/topic/orders", function (message) {
+              console.log(
+                "🔌 [MY-ORDERS] Raw WebSocket message received:",
+                message.body
+              );
+              const notification = JSON.parse(message.body);
+              console.log("🔌 [MY-ORDERS] Parsed notification:", notification);
+              handleOrderNotification(notification);
+            });
+          },
+          function (error) {
+            console.error("WebSocket Error:", error);
+            attemptReconnect();
+          }
+        );
+
+        socket.onclose = function () {
+          console.log("WebSocket Disconnected");
+          attemptReconnect();
+        };
+      }
+
+      function attemptReconnect() {
+        if (reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
+          reconnectAttempts++;
+          console.log(
+            `Attempting to reconnect... (${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS})`
+          );
+          setTimeout(connectWebSocket, RECONNECT_DELAY);
+        } else {
+          console.error("Max reconnection attempts reached");
+        }
+      }
+
+      function handleOrderNotification(notification) {
+        console.log("📬 [MY-ORDERS] Notification received:", notification);
+        console.log(
+          "📬 [MY-ORDERS] Notification type:",
+          notification.notificationType
+        );
+        console.log("📬 [MY-ORDERS] Order number:", notification.orderNumber);
+
+        // If items are added to an order, just reload to update view
+        // The order will disappear from my-orders if it now has pending items
+        if (notification.notificationType === "ITEMS_ADDED") {
+          console.log("➕ [MY-ORDERS] Processing ITEMS_ADDED");
+          console.log(
+            "🔄 [MY-ORDERS] Items added to order - Reloading to update view..."
+          );
+
+          Swal.fire({
+            icon: "info",
+            title: "➕ Items Agregados",
+            text: `Se agregaron nuevos items al Pedido #${notification.orderNumber}`,
+            toast: true,
+            position: "top-end",
+            showConfirmButton: false,
+            timer: 2000,
+            timerProgressBar: true,
+          });
+
+          // Reload to remove order from this view
+          console.log("🔄 [MY-ORDERS] Will reload in 1.5 seconds");
+          setTimeout(() => {
+            console.log("🔄 [MY-ORDERS] RELOADING NOW!");
+            window.location.reload();
+          }, 1500);
+        }
+
+        // Also reload for status changes that might affect this view
+        if (notification.notificationType === "STATUS_CHANGE") {
+          console.log(
+            "📊 [MY-ORDERS] STATUS_CHANGE detected:",
+            notification.status
+          );
+          console.log(
+            "🔄 [MY-ORDERS] Order status changed - Reloading to update view..."
+          );
+          setTimeout(() => {
+            console.log("🔄 [MY-ORDERS] RELOADING NOW!");
+            window.location.reload();
+          }, 1000);
+        }
+
+        if (
+          notification.notificationType !== "ITEMS_ADDED" &&
+          notification.notificationType !== "STATUS_CHANGE"
+        ) {
+          console.log(
+            "⏭️ [MY-ORDERS] Ignoring notification type:",
+            notification.notificationType
+          );
+        }
+      }
+
+      // Initialize WebSocket on page load
+      document.addEventListener("DOMContentLoaded", function () {
+        connectWebSocket();
+      });
+
+      // Cleanup on page unload
+      window.addEventListener("beforeunload", function () {
+        if (stompClient !== null) {
+          stompClient.disconnect();
+        }
+      });
+    </script>
+
+    <!-- Script del Sistema de Temas -->
+    <div th:replace="~{fragments/theme :: themeScript}"></div>
+  </body>
+</html>

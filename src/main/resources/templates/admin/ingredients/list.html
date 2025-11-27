@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>El Sabor - Inventario de Ingredientes</title>
+    <link crossorigin="" href="https://fonts.gstatic.com/" rel="preconnect" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@300;400;500;600;700"
+      rel="stylesheet"
+    />
+    
+    <!-- Sistema de Temas (Modo Claro/Oscuro) -->
+    <div th:replace="~{fragments/theme :: themeResources}"></div>
+    <script>
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              primary: "#38e07b",
+              "primary-dark": "#2bc866",
+              "background-light": "#f8faf9",
+              "background-dark": "#0f1713",
+            },
+            fontFamily: {
+              display: ["Work Sans"],
+            },
+            borderRadius: {
+              DEFAULT: "0.5rem",
+              lg: "0.75rem",
+              xl: "1rem",
+              "2xl": "1.5rem",
+              full: "9999px",
+            },
+          },
+        },
+      };
+    </script>
+
+    <!-- Sidebar Styles Fragment -->
+    <div th:replace="~{fragments/sidebar :: sidebarStyles}"></div>
+  </head>
+  <body
+    class="bg-gradient-to-br from-background-light to-gray-50 dark:from-background-dark dark:to-gray-900 font-display text-gray-800 dark:text-gray-200 overflow-hidden"
+  >
+    <!-- Menu Controls Fragment -->
+    <div th:replace="~{fragments/sidebar :: menuControls}"></div>
+
+    <div class="flex min-h-screen h-screen overflow-hidden">
+      <!-- SIDEBAR - Using Fragment -->
+      <div th:replace="~{fragments/sidebar :: sidebar(activeMenu='inventory')}"></div>
+
+    <!-- MAIN CONTENT -->
+<main class="flex-1 overflow-y-auto h-screen">
+  <div class="p-4 sm:p-6 lg:p-8 pt-20 lg:pt-8">
+    <!-- HEADER -->
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6 sm:mb-8">
+      <div>
+        <h2 class="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 dark:text-white mb-1">
+          Gestión de Inventario
+        </h2>
+        <p class="text-sm sm:text-base text-gray-600 dark:text-gray-400">
+          Control y seguimiento de stock de ingredientes
+        </p>
+      </div>
+      <div class="flex items-center gap-2 flex-wrap">
+        <a th:href="@{/admin/ingredients/new}"
+          class="flex items-center justify-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl bg-gradient-to-r from-primary to-primary-dark text-white font-semibold hover:shadow-lg hover:shadow-primary/30 transition-all shadow-md text-sm sm:text-base">
+          <span class="material-symbols-outlined text-lg">add</span>
+          Añadir Ingrediente
+        </a>
+        <a th:href="@{/admin/ingredient-categories}"
+          class="flex items-center justify-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 text-gray-900 dark:text-white font-semibold hover:bg-gray-50 dark:hover:bg-gray-800 transition-all shadow-md text-sm sm:text-base">
+          <span class="material-symbols-outlined text-lg">category</span>
+          Categorías
+        </a>
+      </div>
+    </div>
+
+    <!-- FLASH MESSAGES -->
+    <div th:if="${successMessage}" class="mb-6 p-4 bg-green-100 dark:bg-green-900 border border-green-200 dark:border-green-800 rounded-xl flex items-center gap-3">
+      <span class="material-symbols-outlined text-green-600 dark:text-green-400">check_circle</span>
+      <span class="text-green-800 dark:text-green-200" th:text="${successMessage}"></span>
+    </div>
+    <div th:if="${errorMessage}" class="mb-6 p-4 bg-red-100 dark:bg-red-900 border border-red-200 dark:border-red-800 rounded-xl flex items-center gap-3">
+      <span class="material-symbols-outlined text-red-600 dark:text-red-400">error</span>
+      <span class="text-red-800 dark:text-red-200" th:text="${errorMessage}"></span>
+    </div>
+
+    <!-- STATS -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
+      <div class="bg-white dark:bg-gray-900 p-4 sm:p-6 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-800">
+        <div class="flex items-center gap-4">
+          <div class="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">
+            <span class="material-symbols-outlined text-primary text-2xl">inventory_2</span>
+          </div>
+          <div>
+            <p class="text-sm text-gray-600 dark:text-gray-400">Total Ingredientes</p>
+            <p class="text-2xl font-bold text-gray-900 dark:text-white" th:text="${totalCount}">0</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white dark:bg-gray-900 p-4 sm:p-6 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-800">
+        <div class="flex items-center gap-4">
+          <div class="w-12 h-12 bg-green-500/10 rounded-xl flex items-center justify-center">
+            <span class="material-symbols-outlined text-green-500 text-2xl">check_circle</span>
+          </div>
+          <div>
+            <p class="text-sm text-gray-600 dark:text-gray-400">Activos</p>
+            <p class="text-2xl font-bold text-gray-900 dark:text-white" th:text="${activeCount}">0</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white dark:bg-gray-900 p-4 sm:p-6 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-800">
+        <div class="flex items-center gap-4">
+          <div class="w-12 h-12 bg-red-500/10 rounded-xl flex items-center justify-center">
+            <span class="material-symbols-outlined text-red-500 text-2xl">cancel</span>
+          </div>
+          <div>
+            <p class="text-sm text-gray-600 dark:text-gray-400">Inactivos</p>
+            <p class="text-2xl font-bold text-gray-900 dark:text-white" th:text="${inactiveCount}">0</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONTENEDOR PRINCIPAL -->
+    <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+      <!-- SECCIÓN TABLA -->
+      <div class="lg:col-span-3 space-y-6">
+        <!-- FILTROS -->
+        <div class="bg-white dark:bg-gray-900 p-4 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-lg">
+          <form th:action="@{/admin/ingredients}" method="get">
+            <div class="flex flex-col md:flex-row items-stretch md:items-center gap-4">
+              <div class="relative flex-1">
+                <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">search</span>
+                <input
+                  name="search"
+                  th:value="${search}"
+                  class="w-full h-12 pl-10 pr-4 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-primary focus:outline-none placeholder:text-gray-400 text-sm"
+                  placeholder="Buscar ingredientes..." type="text" />
+              </div>
+              <div class="flex items-center gap-2">
+                <select
+                  name="categoryId"
+                  class="h-12 px-4 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-primary focus:outline-none text-sm">
+                  <option value="">Todas las Categorías</option>
+                  <option th:each="category : ${allCategories}" 
+                          th:value="${category.idCategory}" 
+                          th:text="${category.name}"
+                          th:selected="${categoryId == category.idCategory}">
+                  </option>
+                </select>
+                <select
+                  name="supplierId"
+                  class="h-12 px-4 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-primary focus:outline-none text-sm">
+                  <option value="">Todos los Proveedores</option>
+                  <option th:each="supplier : ${allSuppliers}" 
+                          th:value="${supplier.idSupplier}" 
+                          th:text="${supplier.name}"
+                          th:selected="${supplierId == supplier.idSupplier}">
+                  </option>
+                </select>
+                <select
+                  name="sortBy"
+                  class="h-12 px-4 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-primary focus:outline-none text-sm">
+                  <option value="stock-asc" th:selected="${sortBy == 'stock-asc'}">Stock: Menor a Mayor</option>
+                  <option value="stock-desc" th:selected="${sortBy == 'stock-desc'}">Stock: Mayor a Menor</option>
+                </select>
+                <select
+                  name="active"
+                  class="h-12 px-4 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-primary focus:outline-none text-sm">
+                  <option value="true" th:selected="${active == true}">Activos</option>
+                  <option value="false" th:selected="${active == false}">Inactivos</option>
+                </select>
+                <button
+                  type="submit"
+                  class="h-12 px-6 flex items-center justify-center gap-2 rounded-xl bg-primary text-white hover:bg-primary-dark transition-colors font-medium">
+                  <span class="material-symbols-outlined">search</span>
+                  Filtrar
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+
+        <!-- TABLA -->
+<div class="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-lg overflow-hidden">
+  <div class="overflow-x-auto">
+    <table class="w-full text-left">
+      <thead>
+        <tr class="bg-gray-50 dark:bg-gray-800">
+          <th class="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-400">
+            Ingrediente
+          </th>
+          <th class="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-400">
+            Categoría
+          </th>
+          <th class="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-400 text-right">
+            Stock Actual
+          </th>
+          <th class="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-400 text-right">
+            Min / Max
+          </th>
+          <th class="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-400 text-center">
+            Nivel de Stock
+          </th>
+          <th class="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-400 text-center">
+            Acciones
+          </th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+        <tr th:if="${#lists.isEmpty(ingredients)}" class="hover:bg-gray-50 dark:hover:bg-gray-800">
+          <td colspan="6" class="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
+            <span class="material-symbols-outlined text-4xl mb-2 opacity-50">inventory_2</span>
+            <p>No hay ingredientes registrados</p>
+          </td>
+        </tr>
+        
+        <tr th:each="ingredient : ${ingredients}" 
+            class="hover:bg-gray-50 dark:hover:bg-gray-800 transition"
+            th:classappend="${!ingredient.active} ? 'opacity-50' : ''">
+          <!-- INGREDIENTE -->
+          <td class="px-6 py-4">
+            <div class="flex items-center gap-3">
+              <div th:if="${ingredient.category != null}" 
+                   th:style="'background-color: ' + ${ingredient.category.color}" 
+                   class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0">
+                <span class="material-symbols-outlined text-white" th:text="${ingredient.category.icon}">nutrition</span>
+              </div>
+              <div th:if="${ingredient.category == null}" 
+                   class="w-10 h-10 bg-gray-300 dark:bg-gray-700 rounded-lg flex items-center justify-center flex-shrink-0">
+                <span class="material-symbols-outlined text-gray-600">nutrition</span>
+              </div>
+              <div>
+                <p class="font-medium text-gray-900 dark:text-white" th:text="${ingredient.name}">Ingrediente</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400" th:text="${ingredient.unitOfMeasure}">kg</p>
+              </div>
+            </div>
+          </td>
+          
+          <!-- CATEGORÍA -->
+          <td class="px-6 py-4">
+            <span th:if="${ingredient.category != null}" 
+                  th:style="'background-color: ' + ${ingredient.category.color} + '20; color: ' + ${ingredient.category.color}"
+                  class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold">
+              <span class="material-symbols-outlined text-sm" th:text="${ingredient.category.icon}">category</span>
+              <span th:text="${ingredient.category.name}">Categoría</span>
+            </span>
+            <span th:if="${ingredient.category == null}" class="text-xs text-gray-400">Sin categoría</span>
+          </td>
+          
+          <!-- STOCK ACTUAL -->
+          <td class="px-6 py-4 text-right">
+            <span class="font-semibold text-gray-900 dark:text-white" 
+                  th:text="${ingredient.currentStock} + ' ' + ${ingredient.unitOfMeasure}">50 kg</span>
+          </td>
+          
+          <!-- MIN / MAX -->
+          <td class="px-6 py-4 text-right">
+            <span class="text-sm text-gray-600 dark:text-gray-400" 
+                  th:text="${ingredient.minStock} + ' / ' + ${ingredient.maxStock}">10 / 100</span>
+          </td>
+          
+          <!-- NIVEL DE STOCK -->
+          <td class="px-6 py-4">
+            <div class="w-full">
+              <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5 mb-1">
+                <div th:if="${ingredient.isOutOfStock()}" class="bg-red-500 h-2.5 rounded-full" style="width: 0%"></div>
+                <div th:if="${ingredient.isLowStock() && !ingredient.isOutOfStock()}" 
+                     class="bg-yellow-500 h-2.5 rounded-full" 
+                     th:style="'width: ' + ${ingredient.getStockPercentage()} + '%'"></div>
+                <div th:if="${ingredient.isHealthyStock() && !ingredient.isOutOfStock()}" 
+                     class="bg-green-500 h-2.5 rounded-full" 
+                     th:style="'width: ' + ${ingredient.getStockPercentage()} + '%'"></div>
+              </div>
+              <p class="text-xs text-center"
+                 th:classappend="${ingredient.isOutOfStock() ? 'text-red-600 dark:text-red-400 font-semibold' : (ingredient.isLowStock() ? 'text-yellow-600 dark:text-yellow-400' : 'text-green-600 dark:text-green-400')}"
+                 th:text="${ingredient.getStockStatus()}">OK</p>
+            </div>
+          </td>
+          
+          <!-- ACCIONES -->
+          <td class="px-6 py-4 text-center space-x-1">
+            <a th:href="@{/admin/ingredients/{id}/edit(id=${ingredient.idIngredient})}"
+               class="inline-block p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+               title="Editar">
+              <span class="material-symbols-outlined text-gray-600 dark:text-gray-400">edit</span>
+            </a>
+            
+            <form th:if="${ingredient.active}" 
+                  th:action="@{/admin/ingredients/{id}/delete(id=${ingredient.idIngredient})}" 
+                  method="post" 
+                  style="display: inline;"
+                  onsubmit="return confirm('¿Estás seguro de desactivar este ingrediente?');">
+              <button type="submit" 
+                      class="p-2 rounded-full hover:bg-red-100 dark:hover:bg-red-900 transition-colors"
+                      title="Desactivar">
+                <span class="material-symbols-outlined text-red-600 dark:text-red-400">delete</span>
+              </button>
+            </form>
+            
+            <form th:if="${!ingredient.active}" 
+                  th:action="@{/admin/ingredients/{id}/activate(id=${ingredient.idIngredient})}" 
+                  method="post" 
+                  style="display: inline;">
+              <button type="submit" 
+                      class="p-2 rounded-full hover:bg-green-100 dark:hover:bg-green-900 transition-colors"
+                      title="Activar">
+                <span class="material-symbols-outlined text-green-600 dark:text-green-400">check_circle</span>
+              </button>
+            </form>
+            
+            <!-- CARRITO: Redirige a proveedores filtrados por este ingrediente -->
+            <a th:href="@{/admin/suppliers(ingredientId=${ingredient.idIngredient},categoryId=${ingredient.category != null ? ingredient.category.idCategory : ''})}"
+               class="inline-block p-2 rounded-full hover:bg-green-100 dark:hover:bg-green-700 transition-colors"
+               title="Ver proveedores de este ingrediente">
+              <span class="material-symbols-outlined text-green-600 dark:text-green-300">shopping_cart</span>
+            </a>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+      </div>
+
+      <!-- SIDEBAR DE ALERTAS -->
+      <div class="lg:col-span-1">
+        <div
+          class="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-lg p-6 sticky top-6">
+          <div class="flex items-center gap-3 mb-6">
+            <div class="w-10 h-10 bg-red-500/10 rounded-xl flex items-center justify-center">
+              <span class="material-symbols-outlined text-red-500 text-xl">warning</span>
+            </div>
+            <h3 class="text-lg font-bold text-gray-900 dark:text-white">Alertas de Stock</h3>
+          </div>
+
+          <!-- ESTADÍSTICAS -->
+          <div class="grid grid-cols-2 gap-3 mb-6">
+            <div class="bg-red-50 dark:bg-red-900/20 p-3 rounded-lg">
+              <p class="text-2xl font-bold text-red-600 dark:text-red-400" th:text="${outOfStockCount}">0</p>
+              <p class="text-xs text-gray-600 dark:text-gray-400">Agotados</p>
+            </div>
+            <div class="bg-yellow-50 dark:bg-yellow-900/20 p-3 rounded-lg">
+              <p class="text-2xl font-bold text-yellow-600 dark:text-yellow-400" th:text="${lowStockCount}">0</p>
+              <p class="text-xs text-gray-600 dark:text-gray-400">Stock Bajo</p>
+            </div>
+          </div>
+
+          <!-- INGREDIENTES CRÍTICOS -->
+          <div class="space-y-3 max-h-96 overflow-y-auto">
+            <div th:if="${lowStockCount == 0 && outOfStockCount == 0}" class="text-center py-4">
+              <span class="material-symbols-outlined text-4xl text-green-500 mb-2">check_circle</span>
+              <p class="text-sm text-gray-600 dark:text-gray-400">Todo el stock está bien</p>
+            </div>
+            
+            <div th:each="ingredient : ${ingredients}" 
+                 th:if="${ingredient.isLowStock() || ingredient.isOutOfStock()}"
+                 class="flex items-center justify-between p-3 rounded-lg"
+                 th:classappend="${ingredient.isOutOfStock()} ? 'bg-red-500/10' : 'bg-yellow-500/10'">
+              <div>
+                <p class="font-semibold" 
+                   th:classappend="${ingredient.isOutOfStock()} ? 'text-red-500' : 'text-yellow-600 dark:text-yellow-500'"
+                   th:text="${ingredient.name}">Ingrediente</p>
+                <p class="text-sm text-gray-600 dark:text-gray-400" 
+                   th:text="'Quedan ' + ${ingredient.currentStock} + ' ' + ${ingredient.unitOfMeasure}">Quedan X</p>
+              </div>
+              <a th:href="@{/admin/suppliers(ingredientId=${ingredient.idIngredient})}"
+                 class="h-8 px-3 rounded-md bg-primary text-white text-xs font-bold hover:bg-primary-dark transition flex items-center gap-1">
+                <span class="material-symbols-outlined text-sm">shopping_cart</span>
+                Pedir
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+
+    <!-- JAVASCRIPT -->
+    <script>
+      // Auto-hide alerts after 5 seconds
+      document.addEventListener('DOMContentLoaded', function() {
+        // Buscar alertas por su contenido de clase CSS
+        const alerts = document.querySelectorAll('.bg-green-100, .bg-red-100');
+        
+        alerts.forEach(alert => {
+          if (alert && alert.classList.contains('mb-6')) {
+            setTimeout(() => {
+              alert.style.transition = 'opacity 0.5s ease-out, transform 0.5s ease-out';
+              alert.style.opacity = '0';
+              alert.style.transform = 'translateY(-20px)';
+              setTimeout(() => {
+                alert.remove();
+              }, 500);
+            }, 2000);
+          }
+        });
+      });
+
+      <!-- Sidebar Scripts Fragment -->
+      <div th:replace="~{fragments/sidebar :: sidebarScripts}"></div>
+    </script>
+      
+    <!-- Script del Sistema de Temas -->
+    <div th:replace="~{fragments/theme :: themeScript}"></div>
+  </body>
+</html>

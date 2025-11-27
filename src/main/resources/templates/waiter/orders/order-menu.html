@@ -1,0 +1,1431 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>El Gran Sazón - Nuevo Pedido</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@300;400;500;600;700"
+      rel="stylesheet"
+    />
+
+    <!-- Sistema de Temas (Modo Claro/Oscuro) -->
+    <div th:replace="~{fragments/theme :: themeResources}"></div>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              primary: "#38e07b",
+              "primary-dark": "#2bc866",
+              secondary: "#f59e0b",
+              accent: "#3b82f6",
+              "background-light": "#f8faf9",
+              "background-dark": "#0f1323",
+              "surface-light": "#ffffff",
+              "surface-dark": "#1e293b",
+              "text-light-primary": "#0f172a",
+              "text-light-secondary": "#64748b",
+              "text-dark-primary": "#f8fafc",
+              "text-dark-secondary": "#94a3b8",
+            },
+            fontFamily: {
+              display: ["Work Sans"],
+            },
+            borderRadius: {
+              DEFAULT: "0.5rem",
+              lg: "0.75rem",
+              xl: "1rem",
+              "2xl": "1.5rem",
+              full: "9999px",
+            },
+            boxShadow: {
+              soft: "0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05)",
+              green: "0 4px 12px rgba(56, 224, 123, 0.3)",
+            },
+          },
+        },
+      };
+    </script>
+    <style>
+      .material-symbols-outlined {
+        font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24;
+      }
+      .material-symbols-outlined.filled {
+        font-variation-settings: "FILL" 1, "wght" 500;
+      }
+
+      .menu-item-card {
+        transition: all 0.3s ease;
+      }
+
+      .menu-item-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 10px 25px -5px rgb(0 0 0 / 0.1),
+          0 8px 10px -6px rgb(0 0 0 / 0.1);
+      }
+
+      .category-btn {
+        transition: all 0.2s ease;
+      }
+
+      .category-btn:hover:not(.active) {
+        transform: translateY(-2px);
+      }
+
+      .order-item {
+        transition: all 0.2s ease;
+      }
+
+      .order-item:hover {
+        background-color: rgba(56, 224, 123, 0.05);
+      }
+
+      .primary-button {
+        background: linear-gradient(135deg, #38e07b 0%, #2bc866 100%);
+        box-shadow: 0 4px 12px rgba(56, 224, 123, 0.3);
+        transition: all 0.3s ease;
+      }
+
+      .primary-button:hover {
+        box-shadow: 0 6px 16px rgba(56, 224, 123, 0.4);
+        transform: translateY(-2px);
+      }
+
+      .quantity-btn {
+        transition: all 0.2s ease;
+      }
+
+      .quantity-btn:hover {
+        background: #38e07b;
+        color: white;
+      }
+
+      /* Custom Scrollbar */
+      .overflow-y-auto::-webkit-scrollbar {
+        width: 8px;
+      }
+
+      .overflow-y-auto::-webkit-scrollbar-track {
+        background: #f1f5f9;
+        border-radius: 10px;
+      }
+
+      .overflow-y-auto::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 10px;
+      }
+
+      .overflow-y-auto::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8;
+      }
+
+      .dark .overflow-y-auto::-webkit-scrollbar-track {
+        background: #1e293b;
+      }
+
+      .dark .overflow-y-auto::-webkit-scrollbar-thumb {
+        background: #475569;
+      }
+
+      .dark .overflow-y-auto::-webkit-scrollbar-thumb:hover {
+        background: #64748b;
+      }
+    </style>
+  </head>
+  <body
+    class="bg-background-light dark:bg-background-dark font-display text-text-light-primary dark:text-dark-primary"
+  >
+    <div class="flex h-screen flex-col">
+      <!-- Header -->
+      <header
+        class="flex items-center gap-3 border-b border-slate-200/80 dark:border-slate-800/80 bg-white dark:bg-surface-dark px-3 sm:px-6 py-3 sm:py-4 shadow-soft"
+      >
+        <!-- Back Button -->
+        <a
+          href="javascript:history.back()"
+          class="flex h-10 w-10 sm:h-11 sm:w-11 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 transition-colors"
+        >
+          <span class="material-symbols-outlined text-xl">arrow_back</span>
+        </a>
+
+        <!-- Restaurant Icon -->
+        <div
+          class="w-10 h-10 sm:w-12 sm:h-12 shrink-0 bg-gradient-to-br from-primary to-primary-dark rounded-xl flex items-center justify-center shadow-lg shadow-primary/30"
+        >
+          <svg
+            class="w-6 h-6 sm:w-7 sm:h-7 text-white"
+            fill="currentColor"
+            viewBox="0 0 24 24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M11 9H9V2H7v7H5V2H3v7c0 2.12 1.66 3.84 3.75 3.97V22h2.5v-9.03C11.34 12.84 13 11.12 13 9V2h-2v7zm5-3v8h2.5v8H21V2c-2.76 0-5 2.24-5 5z"
+            ></path>
+          </svg>
+        </div>
+
+        <!-- Title and Badges -->
+        <div class="flex-1 min-w-0">
+          <h1
+            class="text-lg sm:text-2xl font-bold text-gray-900 dark:text-white truncate"
+            th:text="${existingOrderId != null} ? 'Agregar Items a Pedido ' + ${existingOrderNumber} : 'Nuevo Pedido'"
+          >
+            Nuevo Pedido
+          </h1>
+          <div class="flex items-center gap-1.5 flex-wrap mt-1">
+            <!-- Order Type Badge -->
+            <span
+              class="inline-flex items-center gap-1 px-1.5 sm:px-2 py-0.5 rounded-lg text-xs font-semibold whitespace-nowrap"
+              th:classappend="${orderType.name() == 'DINE_IN'} ? 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300' : 
+                             (${orderType.name() == 'TAKEOUT'} ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300' : 
+                             'bg-orange-100 text-orange-800 dark:bg-orange-900/50 dark:text-orange-300')"
+            >
+              <span
+                class="material-symbols-outlined"
+                style="font-size: 14px"
+                th:text="${orderType.name() == 'DINE_IN'} ? 'restaurant' : 
+                         (${orderType.name() == 'TAKEOUT'} ? 'shopping_bag' : 'delivery_dining')"
+              >
+                restaurant
+              </span>
+              <span class="hidden xs:inline" th:text="${orderType.displayName}"
+                >Para Comer Aquí</span
+              >
+            </span>
+
+            <!-- Table Badge (DINE_IN only) -->
+            <span
+              th:if="${selectedTable != null}"
+              class="inline-flex items-center gap-1 px-1.5 sm:px-2 py-0.5 rounded-lg text-xs font-semibold bg-purple-100 text-purple-800 dark:bg-purple-900/50 dark:text-purple-300 whitespace-nowrap"
+            >
+              <span class="material-symbols-outlined" style="font-size: 14px">
+                table_restaurant
+              </span>
+              <span
+                >#<span th:text="${selectedTable.tableNumber}">1</span></span
+              >
+            </span>
+
+            <!-- Customer Name (if provided) -->
+            <span
+              th:if="${customerName != null && !customerName.isEmpty()}"
+              class="inline-flex items-center gap-1 px-1.5 sm:px-2 py-0.5 rounded-lg text-xs font-semibold bg-gray-100 text-gray-800 dark:bg-gray-900/50 dark:text-gray-300 max-w-[120px] sm:max-w-none"
+            >
+              <span
+                class="material-symbols-outlined shrink-0"
+                style="font-size: 14px"
+                >person</span
+              >
+              <span class="truncate" th:text="${customerName}">Cliente</span>
+            </span>
+          </div>
+        </div>
+      </header>
+
+      <div class="grid flex-1 grid-cols-12 overflow-hidden">
+        <!-- Menu Section -->
+        <div
+          class="col-span-12 flex flex-col bg-background-light dark:bg-background-dark lg:col-span-7 xl:col-span-8 overflow-hidden"
+        >
+          <!-- Categories - Fixed/Sticky -->
+          <div
+            class="sticky top-0 z-20 border-b border-slate-200/80 px-6 py-4 dark:border-slate-800/80 bg-white dark:bg-surface-dark shadow-sm"
+          >
+            <nav class="flex items-center gap-2 overflow-x-auto">
+              <button
+                th:each="category, iterStat : ${categories}"
+                th:data-category-id="${category.idCategory}"
+                th:classappend="${iterStat.first} ? 'category-btn active flex items-center gap-3 rounded-xl bg-gradient-to-r from-primary to-primary-dark px-6 py-3.5 text-sm font-bold text-white shadow-green whitespace-nowrap' : 'category-btn flex items-center gap-3 rounded-xl px-6 py-3.5 text-sm font-semibold text-text-light-secondary hover:bg-primary/10 hover:text-primary dark:text-text-dark-secondary dark:hover:bg-primary/20 whitespace-nowrap'"
+                onclick="scrollToCategory(this)"
+                type="button"
+              >
+                <span
+                  th:if="${category.icon}"
+                  class="material-symbols-outlined"
+                  th:classappend="${iterStat.first} ? 'filled' : ''"
+                  th:text="${category.icon}"
+                >
+                  restaurant
+                </span>
+                <span th:text="${category.name}">Categoría</span>
+              </button>
+            </nav>
+          </div>
+
+          <!-- Menu Items Grid - Scrolleable -->
+          <main class="flex-1 overflow-y-auto p-4">
+            <div
+              th:each="category : ${categories}"
+              class="mb-6"
+              th:id="'category-' + ${category.idCategory}"
+            >
+              <h3
+                class="text-xl font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2"
+              >
+                <span
+                  th:if="${category.icon}"
+                  class="material-symbols-outlined text-primary text-2xl"
+                  th:text="${category.icon}"
+                >
+                  restaurant
+                </span>
+                <span th:text="${category.name}">Categoría</span>
+              </h3>
+
+              <div class="grid grid-cols-2 gap-4 md:grid-cols-4 xl:grid-cols-5">
+                <!-- Menu Item -->
+                <div
+                  th:each="item : ${itemsByCategory.get(category.idCategory)}"
+                  th:if="${itemsByCategory.get(category.idCategory) != null}"
+                  th:classappend="${!item.available} ? 'opacity-75' : ''"
+                  class="menu-item-card cursor-pointer rounded-xl bg-surface-light shadow-soft dark:bg-surface-dark overflow-hidden relative"
+                  th:data-item-id="${item.idItemMenu}"
+                  th:data-item-name="${item.name}"
+                  th:data-item-price="${item.price}"
+                  th:data-item-description="${item.description}"
+                  th:data-item-image="${item.imageUrl}"
+                  th:data-item-available="${item.available}"
+                  onclick="openItemModal(this)"
+                >
+                  <!-- Promotion Badge (Top Right Corner) -->
+                  <div
+                    class="promotion-badge-indicator absolute top-2 right-2 z-20"
+                    th:data-item-id="${item.idItemMenu}"
+                    style="display: none"
+                  >
+                    <div
+                      class="inline-flex items-center gap-1 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg"
+                    >
+                      <span>🏷️</span>
+                      <span class="promo-text">Promoción</span>
+                    </div>
+                  </div>
+
+                  <!-- AGOTADO Badge (Diagonal) -->
+                  <div
+                    th:if="${!item.available}"
+                    class="absolute top-8 -left-12 w-48 bg-red-600 text-white text-center py-1 transform rotate-[-45deg] z-10 shadow-lg pointer-events-none"
+                    style="
+                      font-weight: 900;
+                      font-size: 0.75rem;
+                      letter-spacing: 0.1em;
+                    "
+                  >
+                    AGOTADO
+                  </div>
+
+                  <div
+                    class="w-full aspect-square bg-cover bg-center bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-800"
+                    th:classappend="${!item.available} ? 'grayscale' : ''"
+                    th:style="${item.imageUrl != null && !item.imageUrl.isEmpty()} ? 'background-image: url(' + ${item.imageUrl} + ')' : ''"
+                  >
+                    <div
+                      th:if="${item.imageUrl == null || item.imageUrl.isEmpty()}"
+                      class="w-full h-full flex items-center justify-center"
+                    >
+                      <span
+                        class="material-symbols-outlined text-6xl text-gray-400 dark:text-gray-600"
+                      >
+                        restaurant
+                      </span>
+                    </div>
+                  </div>
+                  <div class="p-3">
+                    <p
+                      class="font-bold text-sm text-gray-900 dark:text-white truncate"
+                      th:text="${item.name}"
+                    >
+                      Nombre del Producto
+                    </p>
+                    <p
+                      class="text-base font-black text-primary mt-0.5"
+                      th:text="${item.getFormattedPrice()}"
+                    >
+                      $0.00
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </main>
+        </div>
+
+        <!-- Order Sidebar -->
+        <aside
+          id="cart-sidebar"
+          class="fixed lg:relative top-0 right-0 h-full lg:col-span-5 xl:col-span-4 w-full sm:w-96 lg:w-auto transform translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out z-40 col-span-12 flex flex-col border-l border-slate-200/80 bg-surface-light dark:border-slate-800/80 dark:bg-slate-900/70 overflow-hidden shadow-2xl lg:shadow-none"
+        >
+          <!-- Order Header - Fixed -->
+          <div
+            class="sticky top-0 z-20 border-b border-slate-200/80 px-4 py-3 dark:border-slate-800/80 bg-gradient-to-br from-primary/5 to-primary-dark/5 backdrop-blur-sm"
+          >
+            <div class="flex items-center gap-2 mb-0.5">
+              <span class="material-symbols-outlined text-primary text-xl"
+                >receipt_long</span
+              >
+              <h2 class="text-lg font-black text-gray-900 dark:text-white">
+                Comanda
+              </h2>
+              <span
+                id="cartItemCount"
+                class="ml-auto text-sm px-2 py-1 bg-primary text-white rounded-full font-bold"
+              >
+                0
+              </span>
+            </div>
+            <p
+              class="text-xs font-medium text-text-light-secondary dark:text-text-dark-secondary"
+            >
+              <span th:text="${orderType.displayName}">Tipo de Pedido</span>
+              <span th:if="${selectedTable != null}">
+                - Mesa #<span th:text="${selectedTable.tableNumber}">1</span>
+              </span>
+            </p>
+          </div>
+
+          <!-- Order Items - Scrolleable -->
+          <div id="cartItems" class="flex-1 space-y-2 overflow-y-auto p-3">
+            <!-- Cart items will be rendered here dynamically -->
+          </div>
+
+          <!-- Order Summary - Fixed at Bottom -->
+          <div
+            class="sticky bottom-0 z-20 border-t border-slate-200/80 bg-white dark:border-slate-800/80 dark:bg-slate-900/70 p-4 shadow-lg"
+          >
+            <div class="space-y-2.5">
+              <!-- Subtotal -->
+              <div
+                class="flex justify-between text-sm font-semibold text-gray-600 dark:text-gray-400"
+              >
+                <span>Subtotal</span>
+                <span id="cartSubtotal">$0.00</span>
+              </div>
+
+              <!-- IVA -->
+              <div
+                class="flex justify-between text-sm font-semibold text-gray-600 dark:text-gray-400"
+              >
+                <span>IVA (<span th:text="${config.taxRate}">16</span>%)</span>
+                <span id="cartIVA">$0.00</span>
+              </div>
+
+              <!-- Total -->
+              <div
+                class="flex justify-between items-center text-lg font-black bg-primary/10 rounded-lg p-3"
+              >
+                <span class="text-gray-900 dark:text-white">Total</span>
+                <span id="cartTotal" class="text-primary text-2xl">$0.00</span>
+              </div>
+
+              <!-- Payment Method Selector (only for new orders) -->
+              <div class="pt-2" th:if="${existingOrderId == null}">
+                <label
+                  for="paymentMethod"
+                  class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1.5"
+                >
+                  Método de Pago
+                </label>
+                <select
+                  id="paymentMethod"
+                  class="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                >
+                  <option
+                    th:each="method : ${enabledPaymentMethods}"
+                    th:value="${method.name()}"
+                    th:text="${method.icon + ' ' + method.displayName}"
+                    th:selected="${methodStat.first}"
+                  ></option>
+                </select>
+              </div>
+
+              <!-- Action Buttons -->
+              <div class="space-y-2 pt-2">
+                <button
+                  type="button"
+                  onclick="submitOrder()"
+                  id="submitOrderBtn"
+                  disabled
+                  class="primary-button w-full px-6 py-3.5 disabled:bg-gray-300 disabled:cursor-not-allowed disabled:shadow-none text-white rounded-xl font-bold transition-all flex items-center justify-center gap-2"
+                >
+                  <span class="material-symbols-outlined">send</span>
+                  <span
+                    th:text="${existingOrderId != null} ? 'Agregar Items a Orden ' + ${existingOrderNumber} : 'Crear Pedido'"
+                    >Crear Pedido</span
+                  >
+                </button>
+                <button
+                  type="button"
+                  onclick="clearCart()"
+                  class="w-full px-6 py-3 border-2 border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-300 rounded-xl font-semibold transition-all"
+                >
+                  Limpiar Carrito
+                </button>
+              </div>
+            </div>
+          </div>
+        </aside>
+      </div>
+
+      <!-- Floating Cart Button - Mobile/Tablet only -->
+      <button
+        onclick="toggleCart()"
+        class="lg:hidden fixed bottom-6 right-6 z-50 h-16 w-16 rounded-full bg-gradient-to-br from-primary to-primary-dark text-white flex items-center justify-center shadow-2xl hover:scale-110 transition-transform"
+      >
+        <span class="material-symbols-outlined text-3xl">shopping_cart</span>
+        <span
+          id="floatingCartCount"
+          class="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full h-6 w-6 flex items-center justify-center"
+          >0</span
+        >
+      </button>
+
+      <!-- Backdrop for cart - Mobile/Tablet only -->
+      <div
+        id="cart-backdrop"
+        onclick="toggleCart()"
+        class="lg:hidden fixed inset-0 bg-black/60 z-30 hidden"
+      ></div>
+    </div>
+
+    <!-- Item Detail Modal (SweetAlert2 will be used instead) -->
+    <div id="itemModal" style="display: none"></div>
+
+    <script th:inline="javascript">
+      // Data from server
+      const orderData = {
+        orderType: /*[[${orderType.name()}]]*/ "DINE_IN",
+        tableId:
+          /*[[${selectedTable != null ? selectedTable.id : null}]]*/ null,
+        customerName: /*[[${customerName}]]*/ null,
+        customerPhone: /*[[${customerPhone}]]*/ null,
+        deliveryAddress: /*[[${deliveryAddress}]]*/ null,
+        deliveryReferences: /*[[${deliveryReferences}]]*/ null,
+      };
+
+      // Existing order data (for add-items mode)
+      const existingOrderId = /*[[${existingOrderId}]]*/ null;
+      const existingOrderNumber = /*[[${existingOrderNumber}]]*/ null;
+      const isAddItemsMode = existingOrderId !== null;
+
+      // Tax rate from system configuration
+      const taxRate = /*[[${config.taxRate}]]*/ 0.0; // Tax rate as percentage (e.g., 19.0 for 19%)
+      const taxMultiplier = taxRate / 100; // Convert to decimal (e.g., 0.19)
+
+      // Active promotions - loaded via AJAX
+      let activePromotions = [];
+      let itemPromotionsMap = new Map();
+      let promotionsLoaded = false; // Flag to track if promotions are loaded
+
+      // Load promotions from server
+      async function loadPromotions() {
+        try {
+          console.log("Loading promotions from server...");
+          const currentRole = /*[[${currentRole}]]*/ "waiter";
+          const response = await fetch(
+            `/${currentRole}/promotions/active-json`
+          );
+          if (response.ok) {
+            activePromotions = await response.json();
+
+            // Build item promotions map
+            activePromotions.forEach((promo) => {
+              promo.itemIds.forEach((itemId) => {
+                if (!itemPromotionsMap.has(itemId)) {
+                  itemPromotionsMap.set(itemId, []);
+                }
+                itemPromotionsMap.get(itemId).push(promo);
+              });
+            });
+
+            promotionsLoaded = true; // Mark as loaded
+            console.log("✅ Promotions loaded successfully!");
+            console.log("Total promotions:", activePromotions.length);
+            console.log("Items with promotions:", itemPromotionsMap.size);
+            console.log("itemPromotionsMap:", itemPromotionsMap);
+
+            // Update promotion badges on menu items
+            updatePromotionBadges();
+          } else {
+            console.warn("Failed to load promotions:", response.status);
+            promotionsLoaded = true; // Mark as loaded even if failed to avoid blocking
+          }
+        } catch (error) {
+          console.error("Error loading promotions:", error);
+          promotionsLoaded = true; // Mark as loaded even if failed to avoid blocking
+        }
+      }
+
+      // Update promotion badges on menu item cards
+      function updatePromotionBadges() {
+        document
+          .querySelectorAll(".promotion-badge-indicator")
+          .forEach((badge) => {
+            const itemId = parseInt(badge.getAttribute("data-item-id"));
+            const itemPromotions = itemPromotionsMap.get(itemId) || [];
+
+            if (itemPromotions.length > 0) {
+              const promoText = badge.querySelector(".promo-text");
+
+              if (itemPromotions.length === 1) {
+                // Show promotion type
+                const promo = itemPromotions[0];
+                promoText.textContent = promo.displayLabel;
+              } else {
+                // Show number of promotions
+                promoText.textContent = `${itemPromotions.length} Promociones`;
+              }
+
+              badge.style.display = "block";
+            }
+          });
+      }
+
+      // Load promotions when page loads
+      loadPromotions();
+
+      // Cart state
+      let cart = [];
+      let currentItem = null;
+
+      // Scroll to category with smooth animation
+      function scrollToCategory(button) {
+        const categoryId = button.dataset.categoryId;
+        const categorySection = document.getElementById(
+          "category-" + categoryId
+        );
+        const menuContainer = categorySection.closest(".overflow-y-auto");
+
+        if (categorySection && menuContainer) {
+          // Calculate offset (header height)
+          const offset = 80;
+          const elementPosition =
+            categorySection.offsetTop - menuContainer.offsetTop;
+          const offsetPosition = elementPosition - offset;
+
+          // Smooth scroll
+          menuContainer.scrollTo({
+            top: offsetPosition,
+            behavior: "smooth",
+          });
+
+          // Update active state
+          document.querySelectorAll(".category-btn").forEach((btn) => {
+            btn.classList.remove(
+              "active",
+              "bg-gradient-to-r",
+              "from-primary",
+              "to-primary-dark",
+              "text-white",
+              "shadow-green",
+              "font-bold"
+            );
+            btn.classList.add(
+              "text-text-light-secondary",
+              "dark:text-text-dark-secondary",
+              "font-semibold"
+            );
+            const icon = btn.querySelector(".material-symbols-outlined");
+            if (icon) {
+              icon.classList.remove("filled");
+            }
+          });
+
+          button.classList.add(
+            "active",
+            "bg-gradient-to-r",
+            "from-primary",
+            "to-primary-dark",
+            "text-white",
+            "shadow-green",
+            "font-bold"
+          );
+          button.classList.remove(
+            "text-text-light-secondary",
+            "dark:text-text-dark-secondary",
+            "font-semibold"
+          );
+          const activeIcon = button.querySelector(".material-symbols-outlined");
+          if (activeIcon) {
+            activeIcon.classList.add("filled");
+          }
+        }
+      }
+
+      // Toggle cart sidebar (mobile/tablet)
+      function toggleCart() {
+        const sidebar = document.getElementById("cart-sidebar");
+        const backdrop = document.getElementById("cart-backdrop");
+
+        if (sidebar.classList.contains("translate-x-full")) {
+          // Abrir carrito
+          sidebar.classList.remove("translate-x-full");
+          sidebar.classList.add("translate-x-0");
+          backdrop.classList.remove("hidden");
+          document.body.style.overflow = "hidden"; // Prevenir scroll del body
+        } else {
+          // Cerrar carrito
+          sidebar.classList.remove("translate-x-0");
+          sidebar.classList.add("translate-x-full");
+          backdrop.classList.add("hidden");
+          document.body.style.overflow = ""; // Restaurar scroll
+        }
+      }
+
+      // Update item quantity in cart
+      function updateCartItemQuantity(index, delta) {
+        if (cart[index]) {
+          const item = cart[index];
+          const newQuantity = item.quantity + delta;
+
+          if (newQuantity > 0 && newQuantity <= 99) {
+            item.quantity = newQuantity;
+
+            // Si el item tiene promoción aplicada, recalcular con la promoción
+            if (item.appliedPromotionId) {
+              const promotions = itemPromotionsMap.get(parseInt(item.id)) || [];
+              const appliedPromotion = promotions.find(
+                (p) => p.id == item.appliedPromotionId
+              );
+
+              if (appliedPromotion) {
+                const originalTotal = item.price * newQuantity;
+                let discountedTotal = originalTotal;
+
+                // Recalcular según el tipo de promoción
+                if (appliedPromotion.promotionType === "BUY_X_PAY_Y") {
+                  // Para 2x1, 3x2, etc.
+                  const sets = Math.floor(
+                    newQuantity / appliedPromotion.buyQuantity
+                  );
+                  const remaining = newQuantity % appliedPromotion.buyQuantity;
+                  discountedTotal =
+                    sets * appliedPromotion.payQuantity * item.price +
+                    remaining * item.price;
+                } else if (
+                  appliedPromotion.promotionType === "PERCENTAGE_DISCOUNT"
+                ) {
+                  // Para descuentos porcentuales (50%, 30%, etc.)
+                  const discount = appliedPromotion.discountPercentage / 100;
+                  discountedTotal = originalTotal * (1 - discount);
+                } else if (
+                  appliedPromotion.promotionType === "FIXED_AMOUNT_DISCOUNT"
+                ) {
+                  // Para descuentos de monto fijo
+                  const pricePerUnit = Math.max(
+                    0,
+                    item.price - appliedPromotion.discountAmount
+                  );
+                  discountedTotal = pricePerUnit * newQuantity;
+                }
+
+                item.promotionAppliedPrice = discountedTotal / newQuantity;
+                item.subtotal = discountedTotal;
+              } else {
+                // Si no se encuentra la promoción, calcular precio normal
+                item.subtotal = item.price * newQuantity;
+              }
+            } else {
+              // Sin promoción, calcular precio normal
+              item.subtotal = item.price * newQuantity;
+            }
+
+            updateCartUI();
+          } else if (newQuantity <= 0) {
+            // Si llega a 0, eliminar el item
+            removeFromCart(index);
+          }
+        }
+      }
+
+      // Open item modal with SweetAlert2 (style from menu.html)
+      function openItemModal(card) {
+        const itemId = card.dataset.itemId;
+        const itemName = card.dataset.itemName;
+        const itemPrice = parseFloat(card.dataset.itemPrice);
+        const itemDescription = card.dataset.itemDescription;
+        const itemImage = card.dataset.itemImage;
+        const isAvailable = card.dataset.itemAvailable === "true";
+
+        currentItem = {
+          id: itemId,
+          name: itemName,
+          price: itemPrice,
+          description: itemDescription,
+          image: itemImage,
+        };
+
+        // Get promotions for this item
+        const itemPromotions = itemPromotionsMap.get(parseInt(itemId)) || [];
+
+        console.log("=== OPENING MODAL ===");
+        console.log("Item ID:", itemId);
+        console.log("Promotions for this item:", itemPromotions.length);
+        console.log("Promotion details:", itemPromotions);
+        console.log("====================");
+
+        // Default image if not provided
+        const imageUrl =
+          itemImage && itemImage !== "null" && itemImage !== ""
+            ? itemImage
+            : "https://via.placeholder.com/400x300/f3f4f6/9ca3af?text=Sin+Imagen";
+
+        Swal.fire({
+          html: `
+            <div class="flex flex-col md:flex-row gap-6 text-left">
+                <!-- Imagen del producto - Izquierda -->
+                <div class="md:w-1/2">
+                    <img src="${imageUrl}" alt="${itemName}" class="w-full h-64 md:h-full object-cover rounded-xl ${
+            !isAvailable ? "grayscale" : ""
+          }" />
+                </div>
+                
+                <!-- Detalles del producto - Derecha -->
+                <div class="md:w-1/2 flex flex-col">
+                    <h2 class="text-3xl font-black ${
+                      !isAvailable ? "text-red-600" : "text-gray-900"
+                    } mb-2">${itemName}</h2>
+                    <p class="text-5xl font-black text-primary mb-4">$${itemPrice.toFixed(
+                      2
+                    )}</p>
+                    <p class="text-gray-600 mb-6 flex-grow">${
+                      itemDescription || "Sin descripción disponible"
+                    }</p>
+                    
+                    ${
+                      isAvailable
+                        ? `
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-bold text-gray-700 mb-2">Cantidad</label>
+                            <div class="flex items-center gap-3">
+                                <button onclick="updateQuantity(-1)" class="flex h-11 w-11 items-center justify-center rounded-lg bg-gray-200 hover:bg-primary hover:text-white font-bold transition-all text-xl">
+                                    −
+                                </button>
+                                <span id="modal-quantity" class="text-3xl font-black w-16 text-center">1</span>
+                                <button onclick="updateQuantity(1)" class="flex h-11 w-11 items-center justify-center rounded-lg bg-gray-200 hover:bg-primary hover:text-white font-bold transition-all text-xl">
+                                    +
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-xs font-bold text-gray-700 mb-2">
+                                <span class="material-symbols-outlined text-green-600 align-middle text-sm mr-1">local_offer</span>
+                                Promociones (${itemPromotions.length})
+                            </label>
+                            <div class="flex gap-1.5 flex-wrap">
+                                <!-- Botón "Sin promoción" -->
+                                <button 
+                                    type="button"
+                                    class="promotion-btn flex-1 min-w-fit px-2 py-1.5 rounded-lg border border-gray-300 bg-white hover:border-primary hover:bg-primary/5 transition-all flex flex-col items-center justify-center gap-0.5 relative text-xs"
+                                    data-promo-id=""
+                                    onclick="selectPromotion(this, '')"
+                                >
+                                    <span class="material-symbols-outlined text-gray-500 text-base">cancel</span>
+                                    <span class="font-semibold text-gray-700 text-center leading-tight">Sin promo</span>
+                                    <span class="material-symbols-outlined text-primary hidden check-icon absolute top-0.5 right-0.5 text-sm">check_circle</span>
+                                </button>
+                                
+                                <!-- Botones de promociones -->
+                                ${itemPromotions
+                                  .map(
+                                    (promo) =>
+                                      `<button 
+                                    type="button"
+                                    class="promotion-btn flex-1 min-w-fit px-2 py-1.5 rounded-lg border border-amber-400 bg-gradient-to-br from-amber-50 to-orange-50 hover:from-amber-100 hover:to-orange-100 transition-all flex flex-col items-center justify-center gap-0.5 relative text-xs"
+                                    data-promo-id="${promo.id}"
+                                    onclick="selectPromotion(this, '${promo.id}')"
+                                >
+                                    <span class="material-symbols-outlined text-amber-600 text-base">local_offer</span>
+                                    <div class="text-center leading-tight">
+                                        <div class="font-bold text-xs text-amber-700">${promo.displayLabel}</div>
+                                    </div>
+                                    <span class="material-symbols-outlined text-primary hidden check-icon absolute top-0.5 right-0.5 text-sm">check_circle</span>
+                                </button>`
+                                  )
+                                  .join("")}
+                            </div>
+                            <input type="hidden" id="promotion-selector" value="" />
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-bold text-gray-700 mb-2">Comentarios especiales (opcional)</label>
+                            <textarea id="item-comments" class="w-full rounded-lg border-2 border-gray-300 p-3 focus:border-primary focus:outline-none text-sm" rows="3" placeholder="Ej: Sin cebolla, extra queso, término medio..."></textarea>
+                        </div>
+                    </div>
+                    `
+                        : `
+                    <div class="bg-red-50 border-2 border-red-200 rounded-xl p-6 mt-4">
+                        <div class="flex items-center gap-3 mb-2">
+                            <span class="material-symbols-outlined text-red-600 text-3xl">error</span>
+                            <h3 class="text-xl font-black text-red-600">Producto Agotado</h3>
+                        </div>
+                        <p class="text-red-700 font-semibold">Este producto no está disponible por el momento debido a falta de stock.</p>
+                    </div>
+                    `
+                    }
+                </div>
+            </div>
+        `,
+          showCancelButton: !isAvailable,
+          showConfirmButton: isAvailable,
+          confirmButtonColor: "#38e07b",
+          cancelButtonColor: "#6b7280",
+          confirmButtonText: isAvailable
+            ? '<span style="display: flex; align-items: center; gap: 8px;"><span class="material-symbols-outlined" style="font-size: 20px;">add_shopping_cart</span> Agregar al Carrito</span>'
+            : null,
+          cancelButtonText: isAvailable ? "Cancelar" : "Cerrar",
+          width: "900px",
+          showCloseButton: true,
+          customClass: {
+            popup: "rounded-2xl",
+            htmlContainer: "p-0",
+            confirmButton: "rounded-xl px-6 py-3 font-bold",
+            cancelButton: "rounded-xl px-6 py-3 font-bold",
+            actions: "mt-6",
+          },
+          backdrop: "rgba(0,0,0,0.6)",
+          didOpen: () => {
+            // Variable global para la cantidad
+            window.modalQuantity = 1;
+
+            // Seleccionar por defecto "Sin promoción"
+            const defaultBtn = document.querySelector(
+              '.promotion-btn[data-promo-id=""]'
+            );
+            if (defaultBtn) {
+              selectPromotion(defaultBtn, "");
+            }
+          },
+        }).then((result) => {
+          if (result.isConfirmed) {
+            const quantity = window.modalQuantity;
+            const comments = document
+              .getElementById("item-comments")
+              .value.trim();
+
+            // Get selected promotion
+            const promotionSelector =
+              document.getElementById("promotion-selector");
+            const selectedPromotionId = promotionSelector
+              ? promotionSelector.value
+              : "";
+
+            addToCart(quantity, comments, selectedPromotionId);
+          }
+        });
+      }
+
+      // Select promotion button (for new button-based promotion selector)
+      function selectPromotion(button, promoId) {
+        // Remover selección de todos los botones
+        document.querySelectorAll(".promotion-btn").forEach((btn) => {
+          btn.classList.remove(
+            "border-primary",
+            "bg-primary/10",
+            "ring-2",
+            "ring-primary"
+          );
+          btn.querySelector(".check-icon")?.classList.add("hidden");
+        });
+
+        // Marcar el botón seleccionado
+        button.classList.add(
+          "border-primary",
+          "bg-primary/10",
+          "ring-2",
+          "ring-primary"
+        );
+        const checkIcon = button.querySelector(".check-icon");
+        if (checkIcon) {
+          checkIcon.classList.remove("hidden");
+        }
+
+        // Actualizar el valor del input hidden
+        const hiddenInput = document.getElementById("promotion-selector");
+        if (hiddenInput) {
+          hiddenInput.value = promoId;
+        }
+      }
+
+      // Close item modal (not needed with SweetAlert, but keep for compatibility)
+      function closeItemModal() {
+        Swal.close();
+      }
+
+      // Update quantity in modal
+      function updateQuantity(delta) {
+        window.modalQuantity = Math.max(
+          1,
+          Math.min(99, window.modalQuantity + delta)
+        );
+        document.getElementById("modal-quantity").textContent =
+          window.modalQuantity;
+      }
+
+      // Increment quantity (kept for compatibility)
+      function incrementQuantity() {
+        updateQuantity(1);
+      }
+
+      // Decrement quantity (kept for compatibility)
+      function decrementQuantity() {
+        updateQuantity(-1);
+      }
+
+      // Update modal subtotal (not used in SweetAlert version but kept for compatibility)
+      function updateModalSubtotal() {
+        // Not needed in SweetAlert version
+      }
+
+      // Add to cart
+      function addToCart(quantity, comments, selectedPromotionId = null) {
+        if (!currentItem) return;
+
+        const qty = quantity || 1;
+        let promotionAppliedPrice = null;
+        let appliedPromotion = null;
+
+        // Check if promotion was selected
+        if (selectedPromotionId) {
+          const promotions =
+            itemPromotionsMap.get(parseInt(currentItem.id)) || [];
+          appliedPromotion = promotions.find(
+            (p) => p.id == selectedPromotionId
+          );
+
+          console.log("Selected promotion ID:", selectedPromotionId);
+          console.log("Promotions for item:", promotions);
+          console.log("Found promotion:", appliedPromotion);
+
+          if (appliedPromotion) {
+            // Validate minimum quantity for BUY_X_PAY_Y promotions
+            if (appliedPromotion.promotionType === "BUY_X_PAY_Y") {
+              if (qty < appliedPromotion.buyQuantity) {
+                Swal.fire({
+                  icon: "warning",
+                  title: "Cantidad insuficiente",
+                  html: `Para aplicar la promoción <strong>${appliedPromotion.displayLabel}</strong> necesitas agregar al menos <strong>${appliedPromotion.buyQuantity}</strong> unidades.<br><br>Cantidad actual: <strong>${qty}</strong>`,
+                  confirmButtonText: "Entendido",
+                  confirmButtonColor: "#38e07b",
+                });
+                return; // No agregar al carrito
+              }
+            }
+
+            // Calculate discounted price based on promotion type
+            const originalTotal = currentItem.price * qty;
+            let discountedTotal = originalTotal;
+
+            console.log("Promotion type:", appliedPromotion.promotionType);
+            console.log("Original total:", originalTotal);
+
+            if (appliedPromotion.promotionType === "BUY_X_PAY_Y") {
+              const sets = Math.floor(qty / appliedPromotion.buyQuantity);
+              const remaining = qty % appliedPromotion.buyQuantity;
+              discountedTotal =
+                sets * appliedPromotion.payQuantity * currentItem.price +
+                remaining * currentItem.price;
+              console.log(
+                "BUY_X_PAY_Y: sets=",
+                sets,
+                "remaining=",
+                remaining,
+                "discounted=",
+                discountedTotal
+              );
+            } else if (
+              appliedPromotion.promotionType === "PERCENTAGE_DISCOUNT"
+            ) {
+              const discount = appliedPromotion.discountPercentage / 100;
+              discountedTotal = originalTotal * (1 - discount);
+              console.log(
+                "PERCENTAGE_DISCOUNT:",
+                appliedPromotion.discountPercentage + "%",
+                "discounted=",
+                discountedTotal
+              );
+            } else if (
+              appliedPromotion.promotionType === "FIXED_AMOUNT_DISCOUNT"
+            ) {
+              const pricePerUnit = Math.max(
+                0,
+                currentItem.price - appliedPromotion.discountAmount
+              );
+              discountedTotal = pricePerUnit * qty;
+              console.log(
+                "FIXED_AMOUNT_DISCOUNT: $",
+                appliedPromotion.discountAmount,
+                "discounted=",
+                discountedTotal
+              );
+            }
+
+            promotionAppliedPrice = discountedTotal / qty; // Price per unit with discount
+            console.log(
+              "Final promotion price per unit:",
+              promotionAppliedPrice
+            );
+          }
+        }
+
+        const cartItem = {
+          id: currentItem.id,
+          name: currentItem.name,
+          price: currentItem.price,
+          quantity: qty,
+          comments: comments || "",
+          subtotal: promotionAppliedPrice
+            ? promotionAppliedPrice * qty
+            : currentItem.price * qty,
+          image: currentItem.image,
+          promotionAppliedPrice: promotionAppliedPrice,
+          appliedPromotionId: selectedPromotionId,
+          promotionLabel: appliedPromotion
+            ? appliedPromotion.displayLabel
+            : null,
+        };
+
+        cart.push(cartItem);
+        updateCartUI();
+
+        // Show success message
+        Swal.fire({
+          icon: "success",
+          title: "Agregado al carrito",
+          text: `${cartItem.name} x${qty}`,
+          timer: 1500,
+          showConfirmButton: false,
+          toast: true,
+          position: "top-end",
+        });
+      }
+
+      // Update cart UI
+      function updateCartUI() {
+        const cartItemsContainer = document.getElementById("cartItems");
+        const itemCount = document.getElementById("cartItemCount");
+        const floatingCartCount = document.getElementById("floatingCartCount");
+        const cartSubtotal = document.getElementById("cartSubtotal");
+        const cartIVA = document.getElementById("cartIVA");
+        const cartTotal = document.getElementById("cartTotal");
+        const submitBtn = document.getElementById("submitOrderBtn");
+
+        console.log("updateCartUI called - cart length:", cart.length);
+
+        // Update item count (both counters)
+        itemCount.textContent = cart.length;
+        if (floatingCartCount) {
+          floatingCartCount.textContent = cart.length;
+        }
+
+        // Calculate subtotal, IVA and total
+        const subtotal = cart.reduce((sum, item) => sum + item.subtotal, 0);
+        const iva = subtotal * taxMultiplier; // Use tax rate from system configuration
+        const total = subtotal + iva;
+
+        cartSubtotal.textContent = `$${subtotal.toFixed(2)}`;
+        cartIVA.textContent = `$${iva.toFixed(2)}`;
+        cartTotal.textContent = `$${total.toFixed(2)}`;
+
+        if (cart.length === 0) {
+          submitBtn.disabled = true;
+          cartItemsContainer.innerHTML = `
+            <div class="text-center py-12">
+              <span class="material-symbols-outlined text-7xl text-slate-300 dark:text-slate-700 mb-3 block">
+                shopping_cart
+              </span>
+              <p class="text-sm font-semibold text-slate-500 dark:text-slate-400">
+                El carrito está vacío
+              </p>
+              <p class="text-xs text-slate-400 dark:text-slate-500 mt-1">
+                Selecciona items del menú
+              </p>
+            </div>
+          `;
+          return;
+        }
+
+        submitBtn.disabled = false;
+
+        // Render cart items (estilo de menu.html con imagen y botones de cantidad)
+        const cartHTML = cart
+          .map(
+            (item, index) => `
+          <div class="order-item rounded-lg p-3 border border-slate-100 dark:border-slate-800">
+            <div class="flex items-center gap-3">
+              ${
+                item.image && item.image !== "null" && item.image !== ""
+                  ? `<img
+                      alt="${item.name}"
+                      class="h-14 w-14 shrink-0 rounded-lg object-cover ring-2 ring-primary/20"
+                      src="${item.image}"
+                    />`
+                  : `<div class="h-14 w-14 shrink-0 rounded-lg bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-800 flex items-center justify-center ring-2 ring-primary/20">
+                      <span class="material-symbols-outlined text-2xl text-gray-400 dark:text-gray-600">restaurant</span>
+                    </div>`
+              }
+              <div class="flex-1 min-w-0">
+                <p class="font-bold text-sm text-gray-900 dark:text-white truncate">
+                  ${item.name}
+                </p>
+                ${
+                  item.promotionLabel
+                    ? `<span class="inline-flex items-center gap-1 px-2 py-0.5 mt-1 text-xs font-semibold text-green-700 dark:text-green-300 bg-green-100 dark:bg-green-900/30 rounded-full border border-green-200 dark:border-green-800">
+                        <span class="material-symbols-outlined text-xs">local_offer</span>
+                        ${item.promotionLabel}
+                      </span>`
+                    : ""
+                }
+                <p class="text-sm font-black text-primary ${
+                  item.promotionAppliedPrice ? "mt-1" : ""
+                }">
+                  ${
+                    item.promotionAppliedPrice
+                      ? `<span class="line-through text-gray-400 dark:text-gray-600 font-normal mr-1">$${item.price.toFixed(
+                          2
+                        )}</span>
+                         <span class="text-green-600 dark:text-green-400">$${item.promotionAppliedPrice.toFixed(
+                           2
+                         )}</span>`
+                      : `$${item.price.toFixed(2)}`
+                  }
+                </p>
+              </div>
+              <div class="flex items-center gap-1.5">
+                <button
+                  onclick="updateCartItemQuantity(${index}, -1)"
+                  class="quantity-btn flex h-7 w-7 items-center justify-center rounded-lg bg-slate-100 font-bold text-slate-700 dark:bg-slate-800 dark:text-slate-300"
+                >
+                  <span class="material-symbols-outlined text-base">remove</span>
+                </button>
+                <span class="w-6 text-center text-base font-black text-gray-900 dark:text-white">
+                  ${item.quantity}
+                </span>
+                <button
+                  onclick="updateCartItemQuantity(${index}, 1)"
+                  class="quantity-btn flex h-7 w-7 items-center justify-center rounded-lg bg-slate-100 font-bold text-slate-700 dark:bg-slate-800 dark:text-slate-300"
+                >
+                  <span class="material-symbols-outlined text-base">add</span>
+                </button>
+              </div>
+              <button
+                onclick="removeFromCart(${index})"
+                class="h-8 w-8 shrink-0 rounded-lg flex items-center justify-center text-slate-500 transition-all hover:bg-red-100 hover:text-red-600 dark:text-slate-400 dark:hover:bg-red-900/50 dark:hover:text-red-400"
+              >
+                <span class="material-symbols-outlined text-lg">delete</span>
+              </button>
+            </div>
+            ${
+              item.comments
+                ? `
+              <div class="mt-2 flex items-center gap-2 rounded-lg bg-amber-50 dark:bg-amber-900/20 p-2 border border-amber-200 dark:border-amber-800">
+                <span class="material-symbols-outlined text-sm text-amber-600 dark:text-amber-400">
+                  edit_note
+                </span>
+                <p class="text-xs font-medium text-amber-900 dark:text-amber-200 flex-1">
+                  ${item.comments}
+                </p>
+              </div>
+            `
+                : ""
+            }
+          </div>
+        `
+          )
+          .join("");
+
+        cartItemsContainer.innerHTML = cartHTML;
+      }
+
+      // Remove from cart
+      function removeFromCart(index) {
+        Swal.fire({
+          title: "¿Eliminar del carrito?",
+          text: cart[index].name,
+          icon: "warning",
+          showCancelButton: true,
+          confirmButtonColor: "#ef4444",
+          cancelButtonColor: "#6b7280",
+          confirmButtonText: "Sí, eliminar",
+          cancelButtonText: "Cancelar",
+        }).then((result) => {
+          if (result.isConfirmed) {
+            cart.splice(index, 1);
+            updateCartUI();
+          }
+        });
+      }
+
+      // Clear cart
+      function clearCart() {
+        if (cart.length === 0) return;
+
+        Swal.fire({
+          title: "¿Limpiar carrito?",
+          text: "Se eliminarán todos los items",
+          icon: "warning",
+          showCancelButton: true,
+          confirmButtonColor: "#ef4444",
+          cancelButtonColor: "#6b7280",
+          confirmButtonText: "Sí, limpiar",
+          cancelButtonText: "Cancelar",
+        }).then((result) => {
+          if (result.isConfirmed) {
+            cart = [];
+            updateCartUI();
+          }
+        });
+      }
+
+      // Submit order
+      function submitOrder() {
+        if (cart.length === 0) {
+          Swal.fire({
+            icon: "warning",
+            title: "Carrito vacío",
+            text: "Agrega items antes de crear el pedido",
+          });
+          return;
+        }
+
+        console.log("=== SUBMITTING ORDER ===");
+        console.log("Is Add Items Mode:", isAddItemsMode);
+        console.log("Existing Order ID:", existingOrderId);
+        console.log("Cart:", cart);
+        console.log("Order Data:", orderData);
+
+        // Prepare form data
+        const form = document.createElement("form");
+        form.method = "POST";
+
+        // Set action based on mode
+        if (isAddItemsMode) {
+          form.action = "/waiter/orders/" + existingOrderId + "/add-items";
+        } else {
+          form.action = "/waiter/orders";
+        }
+
+        // Add employee ID (only for new orders)
+        if (!isAddItemsMode) {
+          const employeeId = /*[[${employee?.idEmpleado}]]*/ null;
+          console.log("Employee ID:", employeeId);
+          if (employeeId) {
+            const employeeInput = document.createElement("input");
+            employeeInput.type = "hidden";
+            employeeInput.name = "employeeId";
+            employeeInput.value = employeeId;
+            form.appendChild(employeeInput);
+          }
+        }
+
+        // Add payment method (only for new orders)
+        if (!isAddItemsMode) {
+          const paymentMethod =
+            document.getElementById("paymentMethod")?.value || "CASH";
+          console.log("Payment Method:", paymentMethod);
+          const paymentInput = document.createElement("input");
+          paymentInput.type = "hidden";
+          paymentInput.name = "paymentMethod";
+          paymentInput.value = paymentMethod;
+          form.appendChild(paymentInput);
+        }
+
+        // Add order data (only for new orders)
+        if (!isAddItemsMode) {
+          Object.keys(orderData).forEach((key) => {
+            if (orderData[key] !== null) {
+              console.log(`Adding ${key}:`, orderData[key]);
+              const input = document.createElement("input");
+              input.type = "hidden";
+              input.name = key;
+              input.value = orderData[key];
+              form.appendChild(input);
+            }
+          });
+        }
+
+        // Add cart items
+        const itemIds = [];
+        const quantities = [];
+        const comments = [];
+        const promotionPrices = [];
+        const promotionIds = [];
+
+        cart.forEach((item, index) => {
+          itemIds.push(item.id);
+          quantities.push(item.quantity);
+          comments.push(item.comments || "");
+          promotionPrices.push(item.promotionAppliedPrice || "");
+          promotionIds.push(item.appliedPromotionId || "");
+
+          const itemIdInput = document.createElement("input");
+          itemIdInput.type = "hidden";
+          itemIdInput.name = "itemIds";
+          itemIdInput.value = item.id;
+          form.appendChild(itemIdInput);
+
+          const quantityInput = document.createElement("input");
+          quantityInput.type = "hidden";
+          quantityInput.name = "quantities";
+          quantityInput.value = item.quantity;
+          form.appendChild(quantityInput);
+
+          const commentsInput = document.createElement("input");
+          commentsInput.type = "hidden";
+          commentsInput.name = "comments";
+          commentsInput.value = item.comments || "";
+          form.appendChild(commentsInput);
+
+          const promotionPriceInput = document.createElement("input");
+          promotionPriceInput.type = "hidden";
+          promotionPriceInput.name = "promotionPrices";
+          promotionPriceInput.value = item.promotionAppliedPrice || "";
+          form.appendChild(promotionPriceInput);
+
+          const promotionIdInput = document.createElement("input");
+          promotionIdInput.type = "hidden";
+          promotionIdInput.name = "promotionIds";
+          promotionIdInput.value = item.appliedPromotionId || "";
+          form.appendChild(promotionIdInput);
+        });
+
+        console.log("Item IDs:", itemIds);
+        console.log("Quantities:", quantities);
+        console.log("Comments:", comments);
+        console.log("Promotion Prices:", promotionPrices);
+        console.log("Promotion IDs:", promotionIds);
+        console.log("Total items in cart:", cart.length);
+        console.log("========================");
+
+        document.body.appendChild(form);
+        form.submit();
+      }
+
+      // Close modal on escape key (for SweetAlert compatibility)
+      document.addEventListener("keydown", function (event) {
+        if (event.key === "Escape") {
+          Swal.close();
+        }
+      });
+
+      // Initialize cart UI on page load
+      document.addEventListener("DOMContentLoaded", function () {
+        updateCartUI();
+      });
+    </script>
+
+    <!-- Script del Sistema de Temas -->
+    <div th:replace="~{fragments/theme :: themeScript}"></div>
+  </body>
+</html>

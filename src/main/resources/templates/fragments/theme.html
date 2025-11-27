@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <!-- ========================================
+         FRAGMENTO DE TEMA - EL GRAN SAZÓN
+         ========================================
+         
+         Incluye los archivos CSS y JS necesarios
+         para el sistema de modo claro/oscuro.
+         
+         USO: Incluir en el <head> de cada página:
+         <div th:replace="~{fragments/theme :: themeResources}"></div>
+    ======================================== -->
+
+    <!-- Fragment: Recursos del Sistema de Temas -->
+    <th:block th:fragment="themeResources">
+      <!-- Script inline para prevenir el flash de modo claro (FOUC) -->
+      <script>
+        // Ejecutar ANTES de que se renderice la página
+        (function () {
+          const savedTheme = localStorage.getItem("elgransazon-theme");
+          if (savedTheme === "dark") {
+            document.documentElement.classList.add("dark");
+          }
+        })();
+      </script>
+
+      <!-- CSS del sistema de temas -->
+      <link
+        rel="stylesheet"
+        th:href="@{/css/theme.css}"
+        href="/css/theme.css"
+      />
+    </th:block>
+
+    <!-- Fragment: Script del Sistema de Temas (incluir al final del body) -->
+    <th:block th:fragment="themeScript">
+      <!-- JavaScript del toggle de tema -->
+      <script
+        th:src="@{/js/theme-toggle.js}"
+        src="/js/theme-toggle.js"
+        defer
+      ></script>
+    </th:block>
+  </head>
+
+  <body>
+    <!-- ========================================
+         BOTÓN DE TOGGLE DE TEMA
+         ========================================
+         
+         USO: Incluir en el <body> de cada página:
+         <div th:replace="~{fragments/theme :: themeToggleButton}"></div>
+    ======================================== -->
+
+    <!-- Fragment: Botón de Toggle (Font Awesome Icons) -->
+    <th:block th:fragment="themeToggleButton">
+      <button
+        id="theme-toggle-btn"
+        class="theme-toggle-btn"
+        aria-label="Cambiar tema"
+        title="Cambiar entre modo claro y oscuro"
+      >
+        <!-- Icono de sol (modo claro) -->
+        <i class="fas fa-sun sun-icon"></i>
+        <!-- Icono de luna (modo oscuro) -->
+        <i class="fas fa-moon moon-icon"></i>
+      </button>
+    </th:block>
+
+    <!-- Fragment: Botón de Toggle (Material Icons) -->
+    <th:block th:fragment="themeToggleButtonMaterial">
+      <button
+        id="theme-toggle-btn"
+        class="theme-toggle-btn"
+        aria-label="Cambiar tema"
+        title="Cambiar entre modo claro y oscuro"
+      >
+        <!-- Icono de sol (modo claro) -->
+        <span class="material-symbols-outlined sun-icon">light_mode</span>
+        <!-- Icono de luna (modo oscuro) -->
+        <span class="material-symbols-outlined moon-icon">dark_mode</span>
+      </button>
+    </th:block>
+
+    <!-- Fragment: Botón de Toggle (Sin iconos, solo texto) -->
+    <th:block th:fragment="themeToggleButtonText">
+      <button
+        id="theme-toggle-btn"
+        class="theme-toggle-btn"
+        aria-label="Cambiar tema"
+        title="Cambiar entre modo claro y oscuro"
+        style="width: auto; padding: 10px 20px; border-radius: 25px"
+      >
+        <!-- Texto para modo claro -->
+        <span class="sun-icon">🌞 Claro</span>
+        <!-- Texto para modo oscuro -->
+        <span class="moon-icon">🌙 Oscuro</span>
+      </button>
+    </th:block>
+  </body>
+</html>

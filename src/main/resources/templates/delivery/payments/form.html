@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cobrar Pedido - Delivery</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@300;400;500;600;700"
+      rel="stylesheet"
+    />
+
+    <!-- Sistema de Temas (Modo Claro/Oscuro) -->
+    <div th:replace="~{fragments/theme :: themeResources}"></div>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              primary: "#38e07b",
+              "primary-dark": "#2bc866",
+              "background-light": "#f8faf9",
+            },
+            fontFamily: {
+              display: ["Work Sans"],
+            },
+          },
+        },
+      };
+    </script>
+    <style>
+      .material-symbols-outlined {
+        font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24;
+      }
+
+      body {
+        font-family: "Work Sans", sans-serif;
+      }
+
+      .payment-card {
+        background: white;
+        border-radius: 1.5rem;
+        box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1),
+          0 2px 4px -2px rgb(0 0 0 / 0.1);
+        transition: all 0.3s ease;
+      }
+
+      .payment-card:hover {
+        box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1),
+          0 4px 6px -4px rgb(0 0 0 / 0.1);
+      }
+
+      .input-field {
+        transition: all 0.2s ease;
+      }
+
+      .input-field:focus {
+        border-color: #38e07b;
+        box-shadow: 0 0 0 3px rgba(56, 224, 123, 0.1);
+      }
+
+      .primary-button {
+        background: linear-gradient(135deg, #38e07b 0%, #2bc866 100%);
+        box-shadow: 0 4px 12px rgba(56, 224, 123, 0.3);
+        transition: all 0.3s ease;
+      }
+
+      .primary-button:hover {
+        box-shadow: 0 6px 16px rgba(56, 224, 123, 0.4);
+        transform: translateY(-2px);
+      }
+
+      .primary-button:active {
+        transform: translateY(0);
+      }
+
+      .order-item {
+        border-bottom: 1px solid #f1f5f9;
+        padding: 0.75rem 0;
+      }
+
+      .order-item:last-child {
+        border-bottom: none;
+      }
+
+      .tip-btn {
+        transition: all 0.2s ease;
+      }
+
+      .tip-btn:hover {
+        background: #38e07b;
+        color: white;
+        border-color: #38e07b;
+        transform: translateY(-2px);
+      }
+
+      .tip-btn.active {
+        background: #38e07b;
+        color: white;
+        border-color: #38e07b;
+      }
+    </style>
+  </head>
+  <body
+    class="bg-gradient-to-br from-background-light to-gray-50 font-display text-gray-800"
+  >
+    <div class="flex min-h-screen flex-col">
+      <!-- Header -->
+      <header
+        class="bg-white border-b border-gray-200 shadow-lg sticky top-0 z-30"
+      >
+        <div class="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-4">
+              <a
+                th:href="@{/delivery/orders/pending}"
+                class="flex items-center justify-center w-12 h-12 rounded-xl bg-gray-100 hover:bg-gray-200 transition-colors"
+              >
+                <span class="material-symbols-outlined text-gray-600"
+                  >arrow_back</span
+                >
+              </a>
+              <div>
+                <h1 class="text-2xl font-bold text-gray-900">
+                  💰 Cobrar Pedido
+                </h1>
+                <p class="text-sm text-gray-600 mt-1">
+                  Procesa el pago en efectivo
+                </p>
+              </div>
+            </div>
+            <div
+              class="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-primary to-primary-dark rounded-xl shadow-md"
+            >
+              <span class="material-symbols-outlined text-white">payments</span>
+              <span class="text-white font-semibold">Pago en Efectivo</span>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <!-- Main Content -->
+      <main class="flex-1 p-4 sm:p-6 lg:p-8">
+        <!-- Error Messages -->
+        <div
+          th:if="${errorMessage}"
+          class="mb-6 bg-red-100 border-l-4 border-red-500 text-red-700 px-4 py-3 rounded-xl shadow-md max-w-screen-2xl mx-auto"
+        >
+          <div class="flex items-center gap-2">
+            <span class="material-symbols-outlined">error</span>
+            <p class="font-semibold" th:text="${errorMessage}"></p>
+          </div>
+        </div>
+
+        <div
+          class="max-w-screen-2xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6"
+        >
+          <!-- Left Column: Order Details -->
+          <div class="lg:col-span-2 space-y-6">
+            <!-- Order Info Card -->
+            <div class="payment-card p-6">
+              <div class="flex items-center justify-between mb-6">
+                <div class="flex items-center gap-3">
+                  <div
+                    class="w-12 h-12 rounded-xl bg-gradient-to-br from-primary/20 to-primary-dark/20 flex items-center justify-center"
+                  >
+                    <span
+                      class="material-symbols-outlined text-primary text-2xl"
+                      >receipt_long</span
+                    >
+                  </div>
+                  <div>
+                    <h2 class="text-xl font-bold text-gray-900">
+                      Pedido #<span th:text="${order.orderNumber}"></span>
+                    </h2>
+                    <p class="text-sm text-gray-600">
+                      <span th:text="${order.formattedCreatedAt}"></span>
+                    </p>
+                  </div>
+                </div>
+                <div
+                  class="px-4 py-2 bg-yellow-100 text-yellow-800 rounded-xl font-semibold"
+                >
+                  Entregado
+                </div>
+              </div>
+
+              <!-- Customer Info -->
+              <div
+                class="mb-6 p-4 bg-blue-50 rounded-xl border border-blue-200"
+              >
+                <h3
+                  class="text-sm font-bold text-blue-900 mb-3 flex items-center gap-2"
+                >
+                  <span class="material-symbols-outlined text-lg">person</span>
+                  Información del Cliente
+                </h3>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <p class="text-xs text-gray-600">Nombre</p>
+                    <p
+                      class="text-sm font-semibold text-gray-900"
+                      th:text="${order.customerName}"
+                    ></p>
+                  </div>
+                  <div>
+                    <p class="text-xs text-gray-600">Teléfono</p>
+                    <p
+                      class="text-sm font-semibold text-gray-900"
+                      th:text="${order.customerPhone}"
+                    ></p>
+                  </div>
+                  <div class="sm:col-span-2">
+                    <p class="text-xs text-gray-600">Dirección</p>
+                    <p
+                      class="text-sm font-semibold text-gray-900"
+                      th:text="${order.deliveryAddress}"
+                    ></p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Order Items -->
+              <div class="mb-6">
+                <h3
+                  class="text-sm font-bold text-gray-900 mb-3 flex items-center gap-2"
+                >
+                  <span class="material-symbols-outlined text-lg"
+                    >restaurant</span
+                  >
+                  Artículos del Pedido
+                </h3>
+                <div class="space-y-2">
+                  <div
+                    th:each="detail : ${order.orderDetails}"
+                    class="order-item"
+                  >
+                    <div class="flex justify-between items-start">
+                      <div class="flex-1">
+                        <p class="text-sm font-semibold text-gray-900">
+                          <span
+                            th:text="${detail.quantity} + 'x'"
+                            class="text-primary font-bold"
+                          ></span>
+                          <span th:text="${detail.itemMenu.name}"></span>
+                        </p>
+                        <p
+                          th:if="${detail.comments != null and !detail.comments.isEmpty()}"
+                          class="text-xs text-gray-600 italic mt-1"
+                        >
+                          Nota: <span th:text="${detail.comments}"></span>
+                        </p>
+                      </div>
+                      <p
+                        class="text-sm font-bold text-gray-900"
+                        th:text="${detail.formattedSubtotal}"
+                      ></p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Payment Summary -->
+              <div class="border-t-2 border-gray-200 pt-4">
+                <div class="space-y-2">
+                  <div class="flex justify-between text-sm">
+                    <span class="text-gray-600">Subtotal:</span>
+                    <span
+                      class="font-semibold text-gray-900"
+                      th:text="${order.formattedSubtotal}"
+                    ></span>
+                  </div>
+                  <div class="flex justify-between text-sm">
+                    <span class="text-gray-600">IVA:</span>
+                    <span
+                      class="font-semibold text-gray-900"
+                      th:text="${order.formattedTaxAmount}"
+                    ></span>
+                  </div>
+                  <div
+                    class="flex justify-between items-center pt-2 border-t border-gray-200"
+                  >
+                    <span class="text-lg font-bold text-gray-900">Total:</span>
+                    <span
+                      class="text-2xl font-bold text-primary"
+                      th:text="${order.formattedTotal}"
+                    ></span>
+                  </div>
+                  <div class="flex items-center gap-2 pt-2">
+                    <span
+                      class="material-symbols-outlined text-sm text-gray-600"
+                      >payment</span
+                    >
+                    <span class="text-sm text-gray-600">
+                      Método: <span class="font-semibold">Efectivo</span>
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right Column: Payment Form -->
+          <div class="lg:col-span-1">
+            <form
+              th:action="@{/delivery/payments/process/{id}(id=${order.idOrder})}"
+              method="post"
+              id="paymentForm"
+            >
+              <div class="payment-card p-6 sticky top-24">
+                <h3 class="text-lg font-bold text-gray-900 mb-6">
+                  Procesar Pago en Efectivo
+                </h3>
+
+                <!-- Payment Method (Fixed to CASH) -->
+                <div class="mb-6">
+                  <label class="block text-sm font-semibold text-gray-700 mb-3">
+                    Método de Pago
+                  </label>
+                  <div
+                    class="p-4 bg-green-50 border-2 border-green-500 rounded-xl"
+                  >
+                    <div class="flex items-center gap-3">
+                      <span
+                        class="material-symbols-outlined text-green-600 text-3xl"
+                        >payments</span
+                      >
+                      <div>
+                        <p class="font-bold text-green-900">Efectivo</p>
+                        <p class="text-xs text-green-700">
+                          Solo se aceptan pagos en efectivo
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Tip Amount -->
+                <div class="mb-6">
+                  <label
+                    for="tip"
+                    class="block text-sm font-semibold text-gray-700 mb-3"
+                  >
+                    Propina (Opcional)
+                  </label>
+
+                  <!-- Quick Tip Buttons -->
+                  <div class="grid grid-cols-3 gap-2 mb-3">
+                    <button
+                      type="button"
+                      class="tip-btn px-4 py-2 border-2 border-gray-300 rounded-lg font-semibold text-sm"
+                      onclick="setTipPercentage(10)"
+                    >
+                      10%
+                    </button>
+                    <button
+                      type="button"
+                      class="tip-btn px-4 py-2 border-2 border-gray-300 rounded-lg font-semibold text-sm"
+                      onclick="setTipPercentage(15)"
+                    >
+                      15%
+                    </button>
+                    <button
+                      type="button"
+                      class="tip-btn px-4 py-2 border-2 border-gray-300 rounded-lg font-semibold text-sm"
+                      onclick="setTipPercentage(20)"
+                    >
+                      20%
+                    </button>
+                  </div>
+
+                  <!-- Custom Tip Input -->
+                  <div class="relative">
+                    <span
+                      class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 font-bold"
+                      >$</span
+                    >
+                    <input
+                      type="number"
+                      id="tip"
+                      name="tip"
+                      class="input-field w-full pl-8 pr-4 py-3 border-2 border-gray-300 rounded-xl font-semibold focus:outline-none"
+                      placeholder="0.00"
+                      step="0.01"
+                      min="0"
+                      value="0"
+                      oninput="calculateTotalWithTip()"
+                    />
+                  </div>
+                </div>
+
+                <!-- Total with Tip -->
+                <div
+                  class="mb-6 p-4 bg-gradient-to-r from-primary/10 to-primary-dark/10 rounded-xl border-2 border-primary/30"
+                >
+                  <div class="flex justify-between items-center">
+                    <span class="text-sm font-semibold text-gray-700"
+                      >Total a Cobrar:</span
+                    >
+                    <span
+                      id="total-with-tip"
+                      class="text-2xl font-bold text-primary"
+                      th:text="${order.formattedTotal}"
+                    ></span>
+                  </div>
+                </div>
+
+                <!-- Submit Buttons -->
+                <div class="space-y-3">
+                  <button
+                    type="submit"
+                    class="primary-button w-full py-3 px-6 text-white font-bold rounded-xl flex items-center justify-center gap-2"
+                  >
+                    <span class="material-symbols-outlined">check_circle</span>
+                    Confirmar Pago
+                  </button>
+                  <a
+                    th:href="@{/delivery/orders/pending}"
+                    class="block w-full py-3 px-6 bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold rounded-xl text-center transition-colors"
+                  >
+                    Cancelar
+                  </a>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <!-- Thymeleaf data injection -->
+    <script th:inline="javascript">
+      /*<![CDATA[*/
+      window.ORDER_DATA = {
+        total: /*[[${order.total}]]*/ 0,
+        subtotal: /*[[${order.subtotal}]]*/ 0,
+      };
+      /*]]>*/
+    </script>
+
+    <!-- Application JavaScript -->
+    <script>
+      let orderTotal = 0;
+
+      // Initialize data from backend
+      if (window.ORDER_DATA) {
+        orderTotal = parseFloat(window.ORDER_DATA.total) || 0;
+      }
+
+      // Set tip percentage
+      function setTipPercentage(percentage) {
+        const tipAmount = (orderTotal * percentage) / 100;
+        document.getElementById("tip").value = tipAmount.toFixed(2);
+
+        // Update active state
+        document.querySelectorAll(".tip-btn").forEach((btn) => {
+          btn.classList.remove("active");
+        });
+        event.target.classList.add("active");
+
+        calculateTotalWithTip();
+      }
+
+      function calculateTotalWithTip() {
+        const tip = parseFloat(document.getElementById("tip").value) || 0;
+        const totalWithTip = orderTotal + tip;
+
+        document.getElementById("total-with-tip").textContent =
+          "$" + totalWithTip.toFixed(2);
+      }
+
+      // Form validation
+      document
+        .getElementById("paymentForm")
+        .addEventListener("submit", function (e) {
+          e.preventDefault();
+
+          const tip = parseFloat(document.getElementById("tip").value) || 0;
+
+          if (tip < 0) {
+            Swal.fire({
+              icon: "error",
+              title: "Error",
+              text: "La propina no puede ser negativa",
+              confirmButtonColor: "#38e07b",
+            });
+            return;
+          }
+
+          Swal.fire({
+            title: "¿Confirmar pago?",
+            html: `
+              <div class="text-left">
+                <p class="mb-2"><strong>Total:</strong> $${orderTotal.toFixed(
+                  2
+                )}</p>
+                <p class="mb-2"><strong>Propina:</strong> $${tip.toFixed(2)}</p>
+                <p class="mb-2 text-xl"><strong>Total a cobrar:</strong> <span class="text-primary">$${(
+                  orderTotal + tip
+                ).toFixed(2)}</span></p>
+                <p class="mt-4 text-sm text-gray-600">Solo se aceptan pagos en efectivo</p>
+              </div>
+            `,
+            icon: "question",
+            showCancelButton: true,
+            confirmButtonColor: "#38e07b",
+            cancelButtonColor: "#6b7280",
+            confirmButtonText: "Sí, cobrar",
+            cancelButtonText: "Cancelar",
+          }).then((result) => {
+            if (result.isConfirmed) {
+              console.log("💰 Delivery - Playing payment success sound");
+
+              // Play sound and wait for it to finish before submitting
+              playPaymentSound(() => {
+                this.submit();
+              });
+            }
+          });
+        });
+
+      // Play payment success sound and execute callback when finished
+      function playPaymentSound(onComplete) {
+        try {
+          const audio = new Audio("/sounds/payment.mp3");
+          audio.volume = 0.6;
+
+          console.log("🔊 Attempting to play payment sound...");
+
+          // When sound finishes playing, execute callback
+          audio.addEventListener("ended", function () {
+            console.log("✅ Payment sound finished playing");
+            if (onComplete) onComplete();
+          });
+
+          // If sound fails to play, still execute callback after short delay
+          audio.addEventListener("error", function (e) {
+            console.error("❌ Payment audio file not found:", e);
+            console.log("📁 Make sure payment.mp3 exists in /static/sounds/");
+            setTimeout(() => {
+              if (onComplete) onComplete();
+            }, 100);
+          });
+
+          audio
+            .play()
+            .then(() => {
+              console.log("▶️ Payment sound started playing...");
+            })
+            .catch((error) => {
+              console.warn("⚠️ Payment sound prevented:", error.message);
+              // Still execute callback if sound fails
+              setTimeout(() => {
+                if (onComplete) onComplete();
+              }, 100);
+            });
+        } catch (e) {
+          console.error("❌ Error creating payment audio:", e);
+          // Execute callback even if error occurs
+          if (onComplete) onComplete();
+        }
+      }
+
+      // Initialize on page load
+      document.addEventListener("DOMContentLoaded", function () {
+        calculateTotalWithTip();
+      });
+    </script>
+
+    <!-- Script del Sistema de Temas -->
+    <div th:replace="~{fragments/theme :: themeScript}"></div>
+  </body>
+</html>

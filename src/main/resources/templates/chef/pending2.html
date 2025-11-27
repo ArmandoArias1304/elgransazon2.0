@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>El Gran Sazón - Pedidos Pendientes</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@300;400;500;600;700"
+      rel="stylesheet"
+    />
+    
+    <!-- Sistema de Temas (Modo Claro/Oscuro) -->
+    <div th:replace="~{fragments/theme :: themeResources}"></div>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              primary: "#38e07b",
+              "primary-dark": "#2bc866",
+              "background-light": "#f8faf9",
+            },
+            fontFamily: {
+              display: ["Work Sans"],
+            },
+            borderRadius: {
+              DEFAULT: "0.5rem",
+              lg: "0.75rem",
+              xl: "1rem",
+              "2xl": "1.5rem",
+              full: "9999px",
+            },
+          },
+        },
+      };
+    </script>
+    <style>
+      .material-symbols-outlined {
+        font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24;
+      }
+
+      body {
+        font-family: "Work Sans", sans-serif;
+      }
+
+      .card {
+        background-color: white;
+        border: 1px solid #e5e7eb;
+        border-radius: 1.5rem;
+        box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1),
+          0 2px 4px -2px rgb(0 0 0 / 0.1);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        transition: all 0.3s ease;
+        height: 490px;
+      }
+
+      .card:hover {
+        box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1),
+          0 8px 10px -6px rgb(0 0 0 / 0.1);
+      }
+
+      /* Efecto de pedido pendiente - overlay azul */
+      .card.pending {
+        opacity: 1;
+        position: relative;
+      }
+
+      .card.pending::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(205, 241, 254, 0.4);
+        z-index: 1;
+        pointer-events: none;
+      }
+
+      .card.pending .card-body {
+        opacity: 1;
+        filter: brightness(1.6);
+      }
+
+      .card-header {
+        padding: 1.25rem 1.5rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid #f1f5f9;
+        background-color: #fafafa;
+        flex-shrink: 0;
+      }
+
+      .card-body {
+        padding: 1.25rem;
+        flex: 1;
+        overflow-y: auto;
+        overflow-x: hidden;
+      }
+
+      .card-body::-webkit-scrollbar {
+        width: 8px;
+      }
+
+      .card-body::-webkit-scrollbar-track {
+        background: #f1f5f9;
+        border-radius: 10px;
+        margin: 8px 0;
+      }
+
+      .card-body::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 10px;
+      }
+
+      .card-body::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8;
+      }
+
+      .card-footer {
+        padding: 1.25rem;
+        background-color: #f8faf9;
+        display: flex;
+        gap: 0.75rem;
+        justify-content: space-between;
+        border-top: 1px solid #f1f5f9;
+        flex-shrink: 0;
+      }
+
+      .order-item {
+        padding: 1rem 0;
+        border-bottom: 1px solid #f1f5f9;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+
+      .order-item:last-child {
+        border-bottom: none;
+      }
+
+      /* Botón para aceptar pedido (PENDING) */
+      .start-button {
+        flex: 1;
+        padding: 0.875rem 1.5rem;
+        font-size: 1rem;
+        font-weight: 700;
+        text-align: center;
+        color: white;
+        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+        border-radius: 0.75rem;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        border: none;
+        cursor: pointer;
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        position: relative;
+        z-index: 2;
+      }
+
+      .start-button:hover {
+        box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
+        transform: translateY(-1px);
+      }
+
+      .start-button .pulse-animation {
+        animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+      }
+
+      /* Botón para marcar como listo (IN_PREPARATION) */
+      .complete-button {
+        flex: 1;
+        padding: 0.875rem 1.5rem;
+        font-size: 1rem;
+        font-weight: 700;
+        text-align: center;
+        color: white;
+        background: linear-gradient(135deg, #38e07b 0%, #2bc866 100%);
+        border-radius: 0.75rem;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        border: none;
+        cursor: pointer;
+        box-shadow: 0 4px 12px rgba(56, 224, 123, 0.3);
+      }
+
+      .complete-button:hover {
+        box-shadow: 0 6px 16px rgba(56, 224, 123, 0.4);
+        transform: translateY(-1px);
+      }
+
+      .status-badge {
+        padding: 0.5rem 1rem;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        background: rgba(255, 255, 255, 0.2);
+        backdrop-filter: blur(10px);
+      }
+
+      .time-badge {
+        padding: 0.5rem 1rem;
+        border-radius: 9999px;
+        font-size: 0.875rem;
+        font-weight: 600;
+        background: linear-gradient(135deg, #e2e8f0 0%, #cbd5e1 100%);
+        color: #334155;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.5;
+        }
+      }
+    </style>
+  </head>
+  <body
+    class="bg-gradient-to-br from-background-light to-gray-50 font-display text-gray-800"
+  >
+    <div class="flex flex-col min-h-screen">
+      <!-- Header -->
+      <header
+        class="bg-white border-b border-gray-200 shadow-lg sticky top-0 z-30"
+      >
+        <div class="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+          <div
+            class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
+          >
+            <div class="flex items-center gap-3 sm:gap-4">
+              <div
+                class="w-12 h-12 bg-gradient-to-br from-primary to-primary-dark rounded-xl flex items-center justify-center shadow-lg shadow-primary/30"
+              >
+                <span class="material-symbols-outlined text-white text-2xl"
+                  >restaurant</span
+                >
+              </div>
+              <div>
+                <h1 class="text-2xl lg:text-3xl font-bold text-gray-900">
+                  👨‍🍳 Gestión de Pedidos
+                </h1>
+                <p class="text-sm text-gray-600">
+                  Todos los pedidos activos de cocina
+                </p>
+              </div>
+            </div>
+            <div class="flex items-center gap-3">
+              <a
+                th:href="@{/chef/orders/my-orders}"
+                class="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold rounded-xl bg-blue-600 hover:bg-blue-700 text-white hover:shadow-lg hover:shadow-blue-500/30 transition-all"
+              >
+                <span class="material-symbols-outlined">history</span>
+                <span class="hidden sm:inline">Ver Historial</span>
+              </a>
+              <a
+                th:href="@{/chef/dashboard}"
+                class="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold rounded-xl bg-gradient-to-r from-primary to-primary-dark text-white hover:shadow-lg hover:shadow-primary/30 transition-all"
+              >
+                <span class="material-symbols-outlined">dashboard</span>
+                <span class="hidden sm:inline">Dashboard</span>
+              </a>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <!-- Main Content -->
+      <main
+        class="flex-1 w-full max-w-screen-2xl px-4 py-6 mx-auto sm:px-6 lg:px-8"
+      >
+        <!-- Statistics -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+          <!-- Pending Count -->
+          <div
+            class="bg-white rounded-2xl border border-gray-200 shadow-lg p-6 hover:shadow-xl transition-shadow"
+          >
+            <div class="flex items-center justify-between">
+              <div class="flex-1">
+                <p class="text-sm font-medium text-gray-600 mb-1">
+                  Pedidos Pendientes
+                </p>
+                <p
+                  class="text-4xl font-bold text-orange-600"
+                  th:text="${pendingCount}"
+                >
+                  0
+                </p>
+              </div>
+              <div
+                class="w-16 h-16 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center shadow-lg shadow-orange-500/30"
+              >
+                <span class="material-symbols-outlined text-white text-3xl"
+                  >pending_actions</span
+                >
+              </div>
+            </div>
+            <p class="text-xs text-gray-500 mt-2">Sin iniciar preparación</p>
+          </div>
+
+          <!-- In Preparation Count -->
+          <div
+            class="bg-white rounded-2xl border border-gray-200 shadow-lg p-6 hover:shadow-xl transition-shadow"
+          >
+            <div class="flex items-center justify-between">
+              <div class="flex-1">
+                <p class="text-sm font-medium text-gray-600 mb-1">
+                  En Preparación
+                </p>
+                <p
+                  class="text-4xl font-bold text-blue-600"
+                  th:text="${inPreparationCount}"
+                >
+                  0
+                </p>
+              </div>
+              <div
+                class="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/30"
+              >
+                <span class="material-symbols-outlined text-white text-3xl"
+                  >restaurant</span
+                >
+              </div>
+            </div>
+            <p class="text-xs text-gray-500 mt-2">Pedidos en cocina</p>
+          </div>
+        </div>
+
+        <!-- Empty State -->
+        <div
+          th:if="${orders.isEmpty()}"
+          class="flex flex-col items-center justify-center py-16 bg-white rounded-2xl shadow-lg border border-gray-200"
+        >
+          <div
+            class="w-24 h-24 bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl flex items-center justify-center mb-6"
+          >
+            <span class="material-symbols-outlined text-6xl text-gray-400">
+              check_circle
+            </span>
+          </div>
+          <h3 class="text-2xl font-bold text-gray-900 mb-2">
+            ¡Excelente! No hay pedidos activos
+          </h3>
+          <p class="text-gray-600">Todos los pedidos han sido procesados</p>
+        </div>
+
+        <!-- Orders Grid -->
+        <div
+          th:if="${!orders.isEmpty()}"
+          class="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4"
+        >
+          <!-- ORDER CARD -->
+          <div
+            th:each="order : ${orders}"
+            class="card"
+            th:classappend="${order.status.name() == 'PENDING'} ? 'pending' : ''"
+          >
+            <!-- Card Header -->
+            <div class="card-header">
+              <div>
+                <h3 class="text-xl font-bold text-gray-900">
+                  <span
+                    th:if="${order.table != null}"
+                    th:text="'Mesa ' + ${order.table.tableNumber}"
+                  ></span>
+                  <span
+                    th:if="${order.table == null && order.orderType.name() == 'TAKEOUT'}"
+                  >
+                    Para llevar
+                  </span>
+                  <span
+                    th:if="${order.table == null && order.orderType.name() == 'DELIVERY'}"
+                  >
+                    Delivery
+                  </span>
+                  <span
+                    th:if="${order.table == null && order.customerName != null && order.orderType.name() == 'DINE_IN'}"
+                    th:text="${order.customerName}"
+                  ></span>
+                </h3>
+                <p class="text-sm text-gray-600 font-medium">
+                  Creado por: <span th:text="${order.createdBy}"></span>
+                </p>
+                <p class="text-xs text-gray-500 font-semibold mt-0.5">
+                  Pedido <span th:text="${order.orderNumber}"></span>
+                </p>
+              </div>
+              <div class="flex flex-col items-end gap-2">
+                <!-- Order Type Badge -->
+                <span
+                  th:if="${order.orderType.name() == 'DINE_IN'}"
+                  class="status-badge bg-blue-100 text-blue-800"
+                >
+                  🍽️ Mesa
+                </span>
+                <span
+                  th:if="${order.orderType.name() == 'TAKEOUT'}"
+                  class="status-badge bg-orange-100 text-orange-800"
+                >
+                  📦 Llevar
+                </span>
+                <span
+                  th:if="${order.orderType.name() == 'DELIVERY'}"
+                  class="status-badge bg-purple-100 text-purple-800"
+                >
+                  🚗 Delivery
+                </span>
+
+                <!-- Status Badge -->
+                <span
+                  th:if="${order.status.name() == 'PENDING'}"
+                  class="status-badge bg-orange-100 text-orange-800"
+                >
+                  ⏳ Pendiente
+                </span>
+                <span
+                  th:if="${order.status.name() == 'IN_PREPARATION'}"
+                  class="status-badge bg-blue-100 text-blue-800"
+                >
+                  👨‍🍳 Preparando
+                </span>
+              </div>
+            </div>
+
+            <!-- Card Body - Order Details -->
+            <div class="card-body">
+              <h4
+                class="text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wide"
+              >
+                Detalles del Pedido:
+              </h4>
+              <div class="space-y-1">
+                <div
+                  th:each="detail : ${order.orderDetails}"
+                  class="order-item"
+                >
+                  <p class="text-base font-semibold text-gray-900">
+                    <span th:text="${detail.quantity} + 'x'"></span>
+                    <span th:text="${detail.itemMenu.name}"></span>
+                  </p>
+                  <p
+                    th:if="${detail.comments != null && !detail.comments.isEmpty()}"
+                    class="text-sm text-gray-600 pl-4"
+                  >
+                    💬 <span th:text="${detail.comments}"></span>
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Card Footer -->
+            <div class="card-footer flex-col gap-3">
+              <!-- Server Info -->
+              <div class="text-xs text-gray-600 pb-2 border-b border-gray-200">
+                <div class="flex justify-between">
+                  <span class="font-medium">Levantado por:</span>
+                  <span
+                    class="font-semibold text-gray-900"
+                    th:text="${order.createdBy}"
+                  ></span>
+                </div>
+                <div class="flex justify-between mt-1">
+                  <span class="font-medium">Hora:</span>
+                  <span
+                    class="font-semibold text-gray-900"
+                    th:text="${#temporals.format(order.createdAt, 'HH:mm')}"
+                  ></span>
+                </div>
+              </div>
+
+              <!-- Action Buttons -->
+              <!-- PENDING: Show "Aceptar Pedido" button -->
+              <button
+                th:if="${order.status.name() == 'PENDING'}"
+                th:attr="data-order-id=${order.idOrder}, data-order-number=${order.orderNumber}"
+                class="btn-accept-order start-button"
+              >
+                <span class="material-symbols-outlined pulse-animation"
+                  >play_arrow</span
+                >
+                Aceptar Pedido
+              </button>
+
+              <!-- IN_PREPARATION: Show "Marcar como Listo" button -->
+              <button
+                th:if="${order.status.name() == 'IN_PREPARATION'}"
+                th:attr="data-order-id=${order.idOrder}, data-order-number=${order.orderNumber}"
+                class="btn-mark-ready complete-button"
+              >
+                <span class="material-symbols-outlined">check_circle</span>
+                Marcar como Listo
+              </button>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <script th:inline="javascript">
+      /*<![CDATA[*/
+      const currentRole = "chef";
+      /*]]>*/
+
+      // Accept order and change status to IN_PREPARATION
+      function acceptOrder(orderId, orderNumber) {
+        Swal.fire({
+          title: "¿Aceptar pedido?",
+          text: `¿Deseas aceptar el pedido ${orderNumber}?`,
+          icon: "question",
+          showCancelButton: true,
+          confirmButtonText: "Sí, aceptar",
+          cancelButtonText: "Cancelar",
+          confirmButtonColor: "#10b981",
+          cancelButtonColor: "#6b7280",
+        }).then((result) => {
+          if (result.isConfirmed) {
+            changeOrderStatus(
+              orderId,
+              orderNumber,
+              "IN_PREPARATION",
+              "Aceptando pedido...",
+              "Pedido Aceptado",
+              "El pedido está ahora en preparación"
+            );
+          }
+        });
+      }
+
+      // Mark order as READY
+      function markAsReady(orderId, orderNumber) {
+        Swal.fire({
+          title: "¿Marcar como listo?",
+          text: `¿El pedido ${orderNumber} está listo para servir?`,
+          icon: "question",
+          showCancelButton: true,
+          confirmButtonText: "Sí, está listo",
+          cancelButtonText: "Cancelar",
+          confirmButtonColor: "#10b981",
+          cancelButtonColor: "#6b7280",
+        }).then((result) => {
+          if (result.isConfirmed) {
+            changeOrderStatus(
+              orderId,
+              orderNumber,
+              "READY",
+              "Marcando como listo...",
+              "Pedido Listo",
+              "El pedido está listo para servir"
+            );
+          }
+        });
+      }
+
+      // Generic function to change order status
+      function changeOrderStatus(
+        orderId,
+        orderNumber,
+        newStatus,
+        loadingText,
+        successTitle,
+        successText
+      ) {
+        Swal.fire({
+          title: loadingText,
+          text: "Por favor espere",
+          allowOutsideClick: false,
+          allowEscapeKey: false,
+          didOpen: () => {
+            Swal.showLoading();
+
+            fetch(`/${currentRole}/orders/${orderId}/change-status`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/x-www-form-urlencoded",
+              },
+              body: `newStatus=${newStatus}`,
+            })
+              .then((response) => response.json())
+              .then((data) => {
+                Swal.close();
+
+                if (data.success) {
+                  Swal.fire({
+                    icon: "success",
+                    title: successTitle,
+                    text: `${successText}: ${orderNumber}`,
+                    timer: 1500,
+                    showConfirmButton: false,
+                  }).then(() => {
+                    // Reload to update the view
+                    window.location.reload();
+                  });
+                } else {
+                  Swal.fire({
+                    icon: "error",
+                    title: "Error",
+                    text: data.message || "No se pudo cambiar el estado",
+                  });
+                }
+              })
+              .catch((error) => {
+                Swal.close();
+                console.error("Error:", error);
+                Swal.fire({
+                  icon: "error",
+                  title: "Error",
+                  text: "Error al cambiar el estado del pedido",
+                });
+              });
+          },
+        });
+      }
+
+      // Event listeners
+      document.addEventListener("DOMContentLoaded", function () {
+        // Accept order buttons (PENDING -> IN_PREPARATION)
+        document.querySelectorAll(".btn-accept-order").forEach((button) => {
+          button.addEventListener("click", function () {
+            const orderId = this.getAttribute("data-order-id");
+            const orderNumber = this.getAttribute("data-order-number");
+            acceptOrder(orderId, orderNumber);
+          });
+        });
+
+        // Mark as ready buttons (IN_PREPARATION -> READY)
+        document.querySelectorAll(".btn-mark-ready").forEach((button) => {
+          button.addEventListener("click", function () {
+            const orderId = this.getAttribute("data-order-id");
+            const orderNumber = this.getAttribute("data-order-number");
+            markAsReady(orderId, orderNumber);
+          });
+        });
+      });
+    </script>
+      
+    <!-- Script del Sistema de Temas -->
+    <div th:replace="~{fragments/theme :: themeScript}"></div>
+  </body>
+</html>

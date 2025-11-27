@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>El Gran Sazón - Promoción</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@300;400;500;600;700"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+
+    <!-- Sistema de Temas (Modo Claro/Oscuro) -->
+    <div th:replace="~{fragments/theme :: themeResources}"></div>
+
+    <script>
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              primary: "#38e07b",
+              "primary-dark": "#2bc866",
+              "background-light": "#f8faf9",
+              "background-dark": "#0f1713",
+            },
+            fontFamily: { display: ["Work Sans"] },
+            borderRadius: {
+              DEFAULT: "0.5rem",
+              lg: "0.75rem",
+              xl: "1rem",
+              "2xl": "1.5rem",
+              full: "9999px",
+            },
+          },
+        },
+      };
+    </script>
+
+    <!-- Sidebar Styles Fragment -->
+    <div th:replace="~{fragments/sidebar :: sidebarStyles}"></div>
+
+    <style>
+      .config-section {
+        display: none;
+      }
+      .config-section.active {
+        display: block;
+      }
+    </style>
+  </head>
+
+  <body
+    class="bg-gradient-to-br from-background-light to-gray-50 dark:from-background-dark dark:to-gray-900 font-display text-gray-800 dark:text-gray-200 overflow-hidden"
+  >
+    <!-- Menu Controls Fragment -->
+    <div th:replace="~{fragments/sidebar :: menuControls}"></div>
+
+    <div class="flex min-h-screen h-screen overflow-hidden">
+      <!-- SIDEBAR - Using Fragment -->
+      <div
+        th:replace="~{fragments/sidebar :: sidebar(activeMenu='promotions')}"
+      ></div>
+
+      <!-- MAIN CONTENT -->
+      <main class="flex-1 overflow-y-auto h-screen">
+        <div class="p-4 sm:p-6 lg:p-8 pt-20 lg:pt-8">
+          <div class="max-w-4xl mx-auto">
+            <!-- HEADER -->
+            <div class="mb-6 sm:mb-8">
+              <h2
+                class="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 dark:text-white mb-1"
+                th:text="${promotion.idPromotion != null ? 'Editar Promoción' : 'Nueva Promoción'}"
+              ></h2>
+              <p class="text-sm sm:text-base text-gray-600 dark:text-gray-400">
+                Complete los datos de la promoción
+              </p>
+            </div>
+
+            <!-- Form -->
+            <form
+              th:action="@{${formAction}}"
+              th:object="${promotion}"
+              method="post"
+              id="promotionForm"
+              onsubmit="return prepareFormSubmit()"
+              class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6"
+            >
+              <!-- Hidden field for validDays -->
+              <input
+                type="hidden"
+                th:field="*{validDays}"
+                id="validDaysField"
+              />
+
+              <!-- Basic Info -->
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div class="md:col-span-2">
+                  <label
+                    class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2"
+                    >Nombre de la Promoción *</label
+                  >
+                  <input
+                    type="text"
+                    th:field="*{name}"
+                    required
+                    class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                  />
+                  <p
+                    th:if="${#fields.hasErrors('name')}"
+                    th:errors="*{name}"
+                    class="text-red-500 text-sm mt-1"
+                  ></p>
+                </div>
+
+                <div class="md:col-span-2">
+                  <label
+                    class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2"
+                    >Descripción</label
+                  >
+                  <textarea
+                    th:field="*{description}"
+                    rows="3"
+                    class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                  ></textarea>
+                </div>
+
+                <div class="md:col-span-2">
+                  <label
+                    class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2"
+                    >URL de la Imagen de la Promoción</label
+                  >
+                  <input
+                    type="url"
+                    th:field="*{imageUrl}"
+                    placeholder="https://ejemplo.com/imagen-promocion.jpg"
+                    class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                  />
+                  <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    Ingrese la URL de la imagen que se mostrará en la landing
+                    page para esta promoción
+                  </p>
+                  <p
+                    th:if="${#fields.hasErrors('imageUrl')}"
+                    th:errors="*{imageUrl}"
+                    class="text-red-500 text-sm mt-1"
+                  ></p>
+                </div>
+              </div>
+
+              <!-- Promotion Type -->
+              <div class="mb-6">
+                <label
+                  class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2"
+                  >Tipo de Promoción *</label
+                >
+                <select
+                  th:field="*{promotionType}"
+                  id="promotionType"
+                  required
+                  onchange="toggleConfigSections()"
+                  class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                >
+                  <option value="">Seleccione un tipo</option>
+                  <option
+                    th:each="type : ${promotionTypes}"
+                    th:value="${type}"
+                    th:text="${type.displayName}"
+                  ></option>
+                </select>
+                <p
+                  th:if="${#fields.hasErrors('promotionType')}"
+                  th:errors="*{promotionType}"
+                  class="text-red-500 text-sm mt-1"
+                ></p>
+              </div>
+
+              <!-- Configuration Sections -->
+              <div
+                id="config-BUY_X_PAY_Y"
+                class="config-section mb-6 p-4 bg-gray-50 dark:bg-gray-900 rounded-lg"
+              >
+                <h3 class="font-semibold text-gray-900 dark:text-white mb-3">
+                  Configuración 2x1, 3x2, etc.
+                </h3>
+                <div class="grid grid-cols-2 gap-4">
+                  <div>
+                    <label
+                      class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                      >Compra (X) *</label
+                    >
+                    <input
+                      type="number"
+                      th:field="*{buyQuantity}"
+                      min="1"
+                      class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                    />
+                  </div>
+                  <div>
+                    <label
+                      class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                      >Paga (Y) *</label
+                    >
+                    <input
+                      type="number"
+                      th:field="*{payQuantity}"
+                      min="1"
+                      class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                    />
+                  </div>
+                </div>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mt-2">
+                  Ejemplo: Compra=2, Paga=1 → 2x1
+                </p>
+              </div>
+
+              <div
+                id="config-PERCENTAGE_DISCOUNT"
+                class="config-section mb-6 p-4 bg-gray-50 dark:bg-gray-900 rounded-lg"
+              >
+                <h3 class="font-semibold text-gray-900 dark:text-white mb-3">
+                  Descuento Porcentual
+                </h3>
+                <div>
+                  <label
+                    class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                    >Porcentaje de Descuento (%) *</label
+                  >
+                  <input
+                    type="number"
+                    th:field="*{discountPercentage}"
+                    min="0"
+                    max="100"
+                    step="0.01"
+                    class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                  />
+                  <p class="text-sm text-gray-500 dark:text-gray-400 mt-2">
+                    Ejemplo: 20 → 20% de descuento
+                  </p>
+                </div>
+              </div>
+
+              <div
+                id="config-FIXED_AMOUNT_DISCOUNT"
+                class="config-section mb-6 p-4 bg-gray-50 dark:bg-gray-900 rounded-lg"
+              >
+                <h3 class="font-semibold text-gray-900 dark:text-white mb-3">
+                  Descuento Valor Fijo
+                </h3>
+                <div>
+                  <label
+                    class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                    >Monto de Descuento ($) *</label
+                  >
+                  <input
+                    type="number"
+                    th:field="*{discountAmount}"
+                    min="0"
+                    step="0.01"
+                    class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                  />
+                  <p class="text-sm text-gray-500 dark:text-gray-400 mt-2">
+                    Ejemplo: 5.00 → $5 de descuento
+                  </p>
+                </div>
+              </div>
+
+              <!-- Dates -->
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div>
+                  <label
+                    class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2"
+                    >Fecha de Inicio *</label
+                  >
+                  <input
+                    type="date"
+                    th:field="*{startDate}"
+                    required
+                    class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                  />
+                  <p
+                    th:if="${#fields.hasErrors('startDate')}"
+                    th:errors="*{startDate}"
+                    class="text-red-500 text-sm mt-1"
+                  ></p>
+                </div>
+                <div>
+                  <label
+                    class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2"
+                    >Fecha de Fin *</label
+                  >
+                  <input
+                    type="date"
+                    th:field="*{endDate}"
+                    required
+                    class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                  />
+                  <p
+                    th:if="${#fields.hasErrors('endDate')}"
+                    th:errors="*{endDate}"
+                    class="text-red-500 text-sm mt-1"
+                  ></p>
+                </div>
+              </div>
+
+              <!-- Days of Week -->
+              <div class="mb-6">
+                <label
+                  class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2"
+                  >Días Disponibles *</label
+                >
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  <div th:each="day : ${allDaysOfWeek}">
+                    <label
+                      class="flex items-center p-3 bg-gray-50 dark:bg-gray-900 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer"
+                    >
+                      <input
+                        type="checkbox"
+                        name="daysOfWeek"
+                        th:value="${day}"
+                        th:checked="${selectedDays != null && selectedDays.contains(day)}"
+                        class="rounded text-primary focus:ring-primary"
+                      />
+                      <span
+                        class="ml-2 text-sm text-gray-700 dark:text-gray-300"
+                        th:text="${#strings.capitalize(#strings.toLowerCase(day))}"
+                      ></span>
+                    </label>
+                  </div>
+                </div>
+                <p
+                  th:if="${#fields.hasErrors('validDays')}"
+                  th:errors="*{validDays}"
+                  class="text-red-500 text-sm mt-1"
+                ></p>
+              </div>
+
+              <!-- Items Selection -->
+              <div class="mb-6">
+                <label
+                  class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2"
+                  >Items del Menú *</label
+                >
+                <div
+                  class="max-h-96 overflow-y-auto border border-gray-300 dark:border-gray-600 rounded-lg p-4 bg-gray-50 dark:bg-gray-900"
+                >
+                  <div th:each="entry : ${itemsByCategory}" class="mb-4">
+                    <h4
+                      class="font-semibold text-gray-900 dark:text-white mb-2"
+                      th:text="${entry.key}"
+                    ></h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+                      <div th:each="item : ${entry.value}">
+                        <label
+                          class="flex items-center p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded cursor-pointer"
+                        >
+                          <input
+                            type="checkbox"
+                            name="itemIds"
+                            th:value="${item.idItemMenu}"
+                            th:checked="${selectedItemIds != null && selectedItemIds.contains(item.idItemMenu)}"
+                            class="rounded text-primary focus:ring-primary"
+                          />
+                          <span
+                            class="ml-2 text-sm text-gray-700 dark:text-gray-300"
+                            th:text="${item.name}"
+                          ></span>
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <p
+                  th:if="${#fields.hasErrors('items')}"
+                  th:errors="*{items}"
+                  class="text-red-500 text-sm mt-1"
+                ></p>
+              </div>
+
+              <!-- Priority and Status -->
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div>
+                  <label
+                    class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2"
+                    >Prioridad *</label
+                  >
+                  <input
+                    type="number"
+                    th:field="*{priority}"
+                    min="1"
+                    required
+                    class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                  />
+                  <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                    Mayor número = mayor prioridad
+                  </p>
+                </div>
+                <div>
+                  <label
+                    class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2"
+                    >Estado</label
+                  >
+                  <label class="flex items-center mt-2">
+                    <input
+                      type="checkbox"
+                      th:field="*{active}"
+                      class="rounded text-primary focus:ring-primary"
+                    />
+                    <span class="ml-2 text-sm text-gray-700 dark:text-gray-300"
+                      >Activar promoción</span
+                    >
+                  </label>
+                </div>
+              </div>
+
+              <!-- Buttons -->
+              <div class="flex gap-4 justify-end">
+                <a
+                  th:href="@{/admin/promotions}"
+                  class="px-6 py-2.5 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg font-semibold hover:bg-gray-300 dark:hover:bg-gray-600"
+                >
+                  Cancelar
+                </a>
+                <button
+                  type="submit"
+                  class="px-6 py-2.5 bg-gradient-to-r from-primary to-primary-dark text-white rounded-lg font-semibold hover:shadow-lg"
+                >
+                  Guardar Promoción
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <script>
+      function toggleConfigSections() {
+        const type = document.getElementById("promotionType").value;
+        document
+          .querySelectorAll(".config-section")
+          .forEach((el) => el.classList.remove("active"));
+        if (type) {
+          const section = document.getElementById("config-" + type);
+          if (section) section.classList.add("active");
+        }
+      }
+
+      function prepareFormSubmit() {
+        // Concatenate selected days of week into validDays field
+        const selectedDays = [];
+        document
+          .querySelectorAll('input[name="daysOfWeek"]:checked')
+          .forEach((checkbox) => {
+            selectedDays.push(checkbox.value);
+          });
+
+        // Set the concatenated value to the hidden field
+        document.getElementById("validDaysField").value =
+          selectedDays.join(",");
+
+        // Validate that at least one day is selected
+        if (selectedDays.length === 0) {
+          alert("Por favor, seleccione al menos un día de la semana");
+          return false;
+        }
+
+        // Validate date range
+        const startDate = document.getElementById("startDate").value;
+        const endDate = document.getElementById("endDate").value;
+
+        if (startDate && endDate && new Date(startDate) > new Date(endDate)) {
+          alert("La fecha de inicio no puede ser posterior a la fecha de fin");
+          return false;
+        }
+
+        // Show warning if promotion is not valid today
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+        const dayOfWeek = [
+          "SUNDAY",
+          "MONDAY",
+          "TUESDAY",
+          "WEDNESDAY",
+          "THURSDAY",
+          "FRIDAY",
+          "SATURDAY",
+        ][today.getDay()];
+
+        const withinDateRange = start <= today && end >= today;
+        const validForToday = selectedDays.includes(dayOfWeek);
+
+        if (withinDateRange && !validForToday) {
+          const confirmation = confirm(
+            "⚠️ ADVERTENCIA: Esta promoción está dentro del rango de fechas pero HOY (" +
+              getDayName(dayOfWeek) +
+              ") NO está en los días válidos.\n\n" +
+              "La promoción NO se aplicará hasta: " +
+              selectedDays.map((d) => getDayName(d)).join(", ") +
+              ".\n\n" +
+              "¿Desea continuar?"
+          );
+          return confirmation;
+        }
+
+        return true;
+      }
+
+      function getDayName(day) {
+        const names = {
+          MONDAY: "Lunes",
+          TUESDAY: "Martes",
+          WEDNESDAY: "Miércoles",
+          THURSDAY: "Jueves",
+          FRIDAY: "Viernes",
+          SATURDAY: "Sábado",
+          SUNDAY: "Domingo",
+        };
+        return names[day] || day;
+      }
+
+      // Initialize on page load
+      document.addEventListener("DOMContentLoaded", function () {
+        toggleConfigSections();
+
+        // Pre-select days if editing
+        const validDaysValue = document.getElementById("validDaysField").value;
+        if (validDaysValue) {
+          const days = validDaysValue.split(",");
+          document
+            .querySelectorAll('input[name="daysOfWeek"]')
+            .forEach((checkbox) => {
+              if (days.includes(checkbox.value)) {
+                checkbox.checked = true;
+              }
+            });
+        }
+      });
+    </script>
+
+    <!-- Sidebar Scripts Fragment -->
+    <div th:replace="~{fragments/sidebar :: sidebarScripts}"></div>
+    <!-- Theme Script -->
+    <div th:replace="~{fragments/theme :: themeScript}"></div>
+  </body>
+</html>

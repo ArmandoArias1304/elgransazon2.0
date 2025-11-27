@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html class="" lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>DineEasy POS - Sistema de Pedidos</title>
+    <link href="https://fonts.googleapis.com" rel="preconnect" />
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@300;400;500;600;700"
+      rel="stylesheet"
+    />
+    
+    <!-- Sistema de Temas (Modo Claro/Oscuro) -->
+    <div th:replace="~{fragments/theme :: themeResources}"></div>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              primary: "#38e07b",
+              "primary-dark": "#2bc866",
+              secondary: "#f59e0b",
+              accent: "#3b82f6",
+              "background-light": "#f8faf9",
+              "background-dark": "#0f1323",
+              "surface-light": "#ffffff",
+              "surface-dark": "#1e293b",
+              "text-light-primary": "#0f172a",
+              "text-light-secondary": "#64748b",
+              "text-dark-primary": "#f8fafc",
+              "text-dark-secondary": "#94a3b8",
+            },
+            fontFamily: {
+              display: ["Work Sans"],
+            },
+            borderRadius: {
+              DEFAULT: "0.5rem",
+              lg: "0.75rem",
+              xl: "1rem",
+              "2xl": "1.5rem",
+              full: "9999px",
+            },
+            boxShadow: {
+              soft: "0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05)",
+              green: "0 4px 12px rgba(56, 224, 123, 0.3)",
+            },
+          },
+        },
+      };
+    </script>
+    <style>
+      .material-symbols-outlined {
+        font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24;
+      }
+      .material-symbols-outlined.filled {
+        font-variation-settings: "FILL" 1, "wght" 500;
+      }
+
+      .menu-item-card {
+        transition: all 0.3s ease;
+      }
+
+      .menu-item-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 10px 25px -5px rgb(0 0 0 / 0.1),
+          0 8px 10px -6px rgb(0 0 0 / 0.1);
+      }
+
+      .category-btn {
+        transition: all 0.2s ease;
+      }
+
+      .category-btn:hover:not(.active) {
+        transform: translateY(-2px);
+      }
+
+      .order-item {
+        transition: all 0.2s ease;
+      }
+
+      .order-item:hover {
+        background-color: rgba(56, 224, 123, 0.05);
+      }
+
+      .primary-button {
+        background: linear-gradient(135deg, #38e07b 0%, #2bc866 100%);
+        box-shadow: 0 4px 12px rgba(56, 224, 123, 0.3);
+        transition: all 0.3s ease;
+      }
+
+      .primary-button:hover {
+        box-shadow: 0 6px 16px rgba(56, 224, 123, 0.4);
+        transform: translateY(-2px);
+      }
+
+      .quantity-btn {
+        transition: all 0.2s ease;
+      }
+
+      .quantity-btn:hover {
+        background: #38e07b;
+        color: white;
+      }
+
+      /* Custom Scrollbar */
+      .overflow-y-auto::-webkit-scrollbar {
+        width: 8px;
+      }
+
+      .overflow-y-auto::-webkit-scrollbar-track {
+        background: #f1f5f9;
+        border-radius: 10px;
+      }
+
+      .overflow-y-auto::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 10px;
+      }
+
+      .overflow-y-auto::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8;
+      }
+
+      .dark .overflow-y-auto::-webkit-scrollbar-track {
+        background: #1e293b;
+      }
+
+      .dark .overflow-y-auto::-webkit-scrollbar-thumb {
+        background: #475569;
+      }
+
+      .dark .overflow-y-auto::-webkit-scrollbar-thumb:hover {
+        background: #64748b;
+      }
+    </style>
+  </head>
+  <body
+    class="bg-background-light dark:bg-background-dark font-display text-text-light-primary dark:text-dark-primary"
+  >
+    <script>
+      // Función para mostrar el modal del platillo
+      function showDishModal(name, price, image, description) {
+        Swal.fire({
+          html: `
+            <div class="flex flex-col md:flex-row gap-6 text-left">
+                <!-- Imagen del platillo - Izquierda -->
+                <div class="md:w-1/2">
+                    <img src="${image}" alt="${name}" class="w-full h-64 md:h-full object-cover rounded-xl" />
+                </div>
+                
+                <!-- Detalles del platillo - Derecha -->
+                <div class="md:w-1/2 flex flex-col">
+                    <h2 class="text-3xl font-black text-gray-900 mb-2">${name}</h2>
+                    <p class="text-5xl font-black text-primary mb-4">${price}</p>
+                    <p class="text-gray-600 mb-6 flex-grow">${description}</p>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-bold text-gray-700 mb-2">Cantidad</label>
+                            <div class="flex items-center gap-3">
+                                <button onclick="updateQuantity(-1)" class="flex h-11 w-11 items-center justify-center rounded-lg bg-gray-200 hover:bg-primary hover:text-white font-bold transition-all text-xl">
+                                    −
+                                </button>
+                                <span id="modal-quantity" class="text-3xl font-black w-16 text-center">1</span>
+                                <button onclick="updateQuantity(1)" class="flex h-11 w-11 items-center justify-center rounded-lg bg-gray-200 hover:bg-primary hover:text-white font-bold transition-all text-xl">
+                                    +
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-bold text-gray-700 mb-2">Notas especiales (opcional)</label>
+                            <textarea id="dish-notes" class="w-full rounded-lg border-2 border-gray-300 p-3 focus:border-primary focus:outline-none text-sm" rows="3" placeholder="Ej: Sin cebolla, extra picante..."></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `,
+          showCancelButton: true,
+          confirmButtonColor: "#38e07b",
+          cancelButtonColor: "#6b7280",
+          confirmButtonText:
+            '<span style="display: flex; align-items: center; gap: 8px;"><span class="material-symbols-outlined" style="font-size: 20px;">add_shopping_cart</span> Agregar al Pedido</span>',
+          cancelButtonText: "Cancelar",
+          width: "900px",
+          showCloseButton: true,
+          customClass: {
+            popup: "rounded-2xl",
+            htmlContainer: "p-0",
+            confirmButton: "rounded-xl px-6 py-3 font-bold",
+            cancelButton: "rounded-xl px-6 py-3 font-bold",
+            actions: "mt-6",
+          },
+          backdrop: "rgba(0,0,0,0.6)",
+          didOpen: () => {
+            // Variable global para la cantidad
+            window.modalQuantity = 1;
+          },
+        }).then((result) => {
+          if (result.isConfirmed) {
+            const quantity = window.modalQuantity;
+            const notes = document.getElementById("dish-notes").value;
+            addToOrder(name, price, image, quantity, notes);
+          }
+        });
+      }
+
+      // Actualizar cantidad en el modal
+      function updateQuantity(delta) {
+        window.modalQuantity = Math.max(
+          1,
+          Math.min(99, window.modalQuantity + delta)
+        );
+        document.getElementById("modal-quantity").textContent =
+          window.modalQuantity;
+      }
+
+      // Agregar al pedido
+      function addToOrder(name, price, image, quantity, notes) {
+        Swal.fire({
+          icon: "success",
+          title: "¡Agregado!",
+          html: `<p class="text-lg"><b>${quantity}x ${name}</b> agregado al pedido</p>${
+            notes
+              ? `<p class="text-sm text-gray-600 mt-2">Nota: ${notes}</p>`
+              : ""
+          }`,
+          confirmButtonColor: "#38e07b",
+          confirmButtonText: "Continuar",
+          timer: 2000,
+          customClass: {
+            popup: "rounded-2xl",
+            confirmButton: "rounded-xl px-6 py-3 font-bold",
+          },
+        });
+      }
+
+      // Eliminar item del pedido
+      function removeItem(itemName) {
+        Swal.fire({
+          title: "¿Eliminar este platillo?",
+          text: `Se eliminará "${itemName}" del pedido`,
+          icon: "warning",
+          showCancelButton: true,
+          confirmButtonColor: "#ef4444",
+          cancelButtonColor: "#6b7280",
+          confirmButtonText: "Sí, eliminar",
+          cancelButtonText: "Cancelar",
+          customClass: {
+            popup: "rounded-2xl",
+            confirmButton: "rounded-xl px-6 py-3 font-bold",
+            cancelButton: "rounded-xl px-6 py-3 font-bold",
+          },
+        }).then((result) => {
+          if (result.isConfirmed) {
+            Swal.fire({
+              icon: "success",
+              title: "Eliminado",
+              text: "El platillo ha sido eliminado del pedido",
+              confirmButtonColor: "#38e07b",
+              timer: 1500,
+              showConfirmButton: false,
+              customClass: {
+                popup: "rounded-2xl",
+              },
+            });
+          }
+        });
+      }
+
+      // Agregar nota a un item
+      function addNote(itemName) {
+        Swal.fire({
+          title: "Agregar nota",
+          html: `<p class="text-sm text-gray-600 mb-3">Agrega instrucciones especiales para: <b>${itemName}</b></p>`,
+          input: "textarea",
+          inputPlaceholder: "Ej: Sin cebolla, extra picante...",
+          showCancelButton: true,
+          confirmButtonColor: "#38e07b",
+          cancelButtonColor: "#6b7280",
+          confirmButtonText: "Guardar Nota",
+          cancelButtonText: "Cancelar",
+          customClass: {
+            popup: "rounded-2xl",
+            confirmButton: "rounded-xl px-6 py-3 font-bold",
+            cancelButton: "rounded-xl px-6 py-3 font-bold",
+          },
+        }).then((result) => {
+          if (result.isConfirmed && result.value) {
+            Swal.fire({
+              icon: "success",
+              title: "Nota guardada",
+              text: result.value,
+              confirmButtonColor: "#38e07b",
+              timer: 1500,
+              customClass: {
+                popup: "rounded-2xl",
+              },
+            });
+          }
+        });
+      }
+
+      // Eliminar nota
+      function removeNote() {
+        Swal.fire({
+          icon: "success",
+          title: "Nota eliminada",
+          confirmButtonColor: "#38e07b",
+          timer: 1000,
+          showConfirmButton: false,
+          customClass: {
+            popup: "rounded-2xl",
+          },
+        });
+      }
+
+      // Enviar a cocina
+      function sendToKitchen() {
+        Swal.fire({
+          title: "¿Enviar pedido a cocina?",
+          html: `
+            <p class="text-gray-600 mb-4">Se enviará el pedido de la <b>Mesa 7</b> a la cocina</p>
+            <div class="bg-primary/10 rounded-xl p-4">
+                <p class="text-lg font-bold text-gray-900">Total: <span class="text-2xl text-primary">$50.74</span></p>
+            </div>
+        `,
+          icon: "question",
+          showCancelButton: true,
+          confirmButtonColor: "#38e07b",
+          cancelButtonColor: "#6b7280",
+          confirmButtonText:
+            '<span class="flex items-center gap-2"><span class="material-symbols-outlined">restaurant</span> Confirmar Envío</span>',
+          cancelButtonText: "Cancelar",
+          customClass: {
+            popup: "rounded-2xl",
+            confirmButton: "rounded-xl px-6 py-3 font-bold",
+            cancelButton: "rounded-xl px-6 py-3 font-bold",
+          },
+        }).then((result) => {
+          if (result.isConfirmed) {
+            Swal.fire({
+              icon: "success",
+              title: "¡Pedido enviado!",
+              html: '<p>El pedido ha sido enviado a cocina</p><p class="text-sm text-gray-600 mt-2">Pedido #1245</p>',
+              confirmButtonColor: "#38e07b",
+              confirmButtonText: "Entendido",
+              customClass: {
+                popup: "rounded-2xl",
+                confirmButton: "rounded-xl px-6 py-3 font-bold",
+              },
+            });
+          }
+        });
+      }
+
+      // Toggle cart sidebar (mobile/tablet)
+      function toggleCart() {
+        const sidebar = document.getElementById("cart-sidebar");
+        const backdrop = document.getElementById("cart-backdrop");
+
+        if (sidebar.classList.contains("translate-x-full")) {
+          // Abrir carrito
+          sidebar.classList.remove("translate-x-full");
+          sidebar.classList.add("translate-x-0");
+          backdrop.classList.remove("hidden");
+          document.body.style.overflow = "hidden"; // Prevenir scroll del body
+        } else {
+          // Cerrar carrito
+          sidebar.classList.remove("translate-x-0");
+          sidebar.classList.add("translate-x-full");
+          backdrop.classList.add("hidden");
+          document.body.style.overflow = ""; // Restaurar scroll
+        }
+      }
+    </script>
+
+    <div class="flex h-screen flex-col">
+      <!-- Header -->
+      <header
+        class="flex items-center justify-between border-b border-slate-200/80 dark:border-slate-800/80 bg-white dark:bg-surface-dark px-6 py-4 shadow-soft"
+      >
+        <div class="flex items-center gap-4">
+          <div
+            class="w-12 h-12 bg-gradient-to-br from-primary to-primary-dark rounded-xl flex items-center justify-center shadow-lg shadow-primary/30"
+          >
+            <svg
+              class="w-7 h-7 text-white"
+              fill="currentColor"
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M11 9H9V2H7v7H5V2H3v7c0 2.12 1.66 3.84 3.75 3.97V22h2.5v-9.03C11.34 12.84 13 11.12 13 9V2h-2v7zm5-3v8h2.5v8H21V2c-2.76 0-5 2.24-5 5z"
+              ></path>
+            </svg>
+          </div>
+          <div>
+            <h1 class="text-2xl font-bold text-gray-900 dark:text-white">
+              Mesa 7
+            </h1>
+            <p
+              class="text-sm text-text-light-secondary dark:text-text-dark-secondary"
+            >
+              DineEasy POS
+            </p>
+          </div>
+        </div>
+        <div class="flex items-center gap-4">
+          <button
+            class="flex h-11 w-11 items-center justify-center rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 transition-colors"
+          >
+            <span class="material-symbols-outlined">more_vert</span>
+          </button>
+          <div
+            class="h-11 w-11 rounded-xl bg-cover bg-center ring-2 ring-primary/20"
+            style="
+              background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuADNiAxW8kQLfLCSFXbOSZFwPmaRIKlFTn0nR2Hq5WinZsFUJp_LlKdsZNI3uLTg7gOwkXZYAFrFdwlANvUW8it_j146-NBt0aFcpr0D0fIMFPRlhZMAuaCF9V_-FcrHLucS5f3R93Xvc2drmxEZ188LbIO4fJYoy-gHSM0-xu1e9axMDs2ruflLCttFKPsc8l8gHe7PV5AoXWfBCVr7tMblZI8fEJDRQPDP9nqhlL2hxQAKtfqxKIVm-xJq8m5eQ1ysBpl3Za8kA');
+            "
+          ></div>
+        </div>
+      </header>
+
+      <div class="grid flex-1 grid-cols-12 overflow-hidden">
+        <!-- Menu Section -->
+        <div
+          class="col-span-12 flex flex-col bg-background-light dark:bg-background-dark lg:col-span-7 xl:col-span-8 overflow-hidden"
+        >
+          <!-- Categories - Fixed/Sticky -->
+          <div
+            class="sticky top-0 z-20 border-b border-slate-200/80 px-6 py-4 dark:border-slate-800/80 bg-white dark:bg-surface-dark shadow-sm"
+          >
+            <nav class="flex items-center gap-2 overflow-x-auto">
+              <a
+                class="category-btn active flex items-center gap-3 rounded-xl bg-gradient-to-r from-primary to-primary-dark px-6 py-3.5 text-sm font-bold text-white shadow-green whitespace-nowrap"
+                href="#"
+              >
+                <span class="material-symbols-outlined filled">tapas</span>
+                <span>Entradas</span>
+              </a>
+              <a
+                class="category-btn flex items-center gap-3 rounded-xl px-6 py-3.5 text-sm font-semibold text-text-light-secondary hover:bg-primary/10 hover:text-primary dark:text-text-dark-secondary dark:hover:bg-primary/20 whitespace-nowrap"
+                href="#"
+              >
+                <span class="material-symbols-outlined">restaurant_menu</span>
+                <span>Platos Fuertes</span>
+              </a>
+              <a
+                class="category-btn flex items-center gap-3 rounded-xl px-6 py-3.5 text-sm font-semibold text-text-light-secondary hover:bg-primary/10 hover:text-primary dark:text-text-dark-secondary dark:hover:bg-primary/20 whitespace-nowrap"
+                href="#"
+              >
+                <span class="material-symbols-outlined">local_bar</span>
+                <span>Bebidas</span>
+              </a>
+              <a
+                class="category-btn flex items-center gap-3 rounded-xl px-6 py-3.5 text-sm font-semibold text-text-light-secondary hover:bg-primary/10 hover:text-primary dark:text-text-dark-secondary dark:hover:bg-primary/20 whitespace-nowrap"
+                href="#"
+              >
+                <span class="material-symbols-outlined">cake</span>
+                <span>Postres</span>
+              </a>
+            </nav>
+          </div>
+
+          <!-- Menu Items Grid - Scrolleable -->
+          <main class="flex-1 overflow-y-auto p-4">
+            <div class="grid grid-cols-3 gap-4 md:grid-cols-4 xl:grid-cols-5">
+              <!-- Menu Item -->
+              <div
+                onclick="showDishModal('Calamar Crujiente', '$12.99', 'https://lh3.googleusercontent.com/aida-public/AB6AXuCmS4uxkhLi_r8FLukh7WnfYnZO_gmv7jgo-6U12ZY79V4XKEt65-uXPHxWwjsNb-aMR1R1VmIS5z6pt3Br653W-a9BGZBf8Cwdg6J9_VuoGapCObZq_0pXLlaUiFyFrH7n0IEXSDUgY7KeJPSUPLHKT9Rp5ua4bvg_GHZMfR_wTxQbEgqYbzKlVDvF1XS4W9fX6WDT-W1XJ9EA9imMYM-u3AZWJZPr-t3d8avsHwB_gViwwE9bev1XBvwPL-JddAMOk9N5yTJR2Q', 'Delicioso calamar frito con un crujiente empanizado. Servido con salsa tártara y limón.')"
+                class="menu-item-card cursor-pointer rounded-xl bg-surface-light shadow-soft dark:bg-surface-dark overflow-hidden"
+              >
+                <div
+                  class="w-full aspect-square bg-cover bg-center relative"
+                  style="
+                    background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCmS4uxkhLi_r8FLukh7WnfYnZO_gmv7jgo-6U12ZY79V4XKEt65-uXPHxWwjsNb-aMR1R1VmIS5z6pt3Br653W-a9BGZBf8Cwdg6J9_VuoGapCObZq_0pXLlaUiFyFrH7n0IEXSDUgY7KeJPSUPLHKT9Rp5ua4bvg_GHZMfR_wTxQbEgqYbzKlVDvF1XS4W9fX6WDT-W1XJ9EA9imMYM-u3AZWJZPr-t3d8avsHwB_gViwwE9bev1XBvwPL-JddAMOk9N5yTJR2Q');
+                  "
+                >
+                  <div
+                    class="absolute top-2 right-2 bg-primary text-white px-2 py-0.5 rounded-full text-xs font-bold"
+                  >
+                    Popular
+                  </div>
+                </div>
+                <div class="p-3">
+                  <p
+                    class="font-bold text-sm text-gray-900 dark:text-white truncate"
+                  >
+                    Calamar Crujiente
+                  </p>
+                  <p class="text-base font-black text-primary mt-0.5">$12.99</p>
+                </div>
+              </div>
+
+              <div
+                onclick="showDishModal('Dip de Espinacas', '$10.50', 'https://lh3.googleusercontent.com/aida-public/AB6AXuDEQS0X0kZ3-AkcMWJ1h9ZTjnwcMTLObCKVTEtJpzx0lW4voIdAEWycl2rg8iSv6AlGHzja8nUoG9CzFGsBOGjFWo4VDUnfrqTzi0NnTZOfx9ImEVl8JYAFx-hBjR89AUGs8d3wHt0VuOzlnyDL7utxhY6jRT3gHOyA-Ec1KNyLI9U6G_CKnqnzu5xiF5kGxVl6wcouwVZ-skq65Pisn8mpYneR15-0ncJxiawPHE9y989GKNeCIA_DjcQH7a5sByskcb7j5nid-Q', 'Cremoso dip de espinacas con queso y especias. Servido con chips de tortilla.')"
+                class="menu-item-card cursor-pointer rounded-xl bg-surface-light shadow-soft dark:bg-surface-dark overflow-hidden"
+              >
+                <div
+                  class="w-full aspect-square bg-cover bg-center"
+                  style="
+                    background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDEQS0X0kZ3-AkcMWJ1h9ZTjnwcMTLObCKVTEtJpzx0lW4voIdAEWycl2rg8iSv6AlGHzja8nUoG9CzFGsBOGjFWo4VDUnfrqTzi0NnTZOfx9ImEVl8JYAFx-hBjR89AUGs8d3wHt0VuOzlnyDL7utxhY6jRT3gHOyA-Ec1KNyLI9U6G_CKnqnzu5xiF5kGxVl6wcouwVZ-skq65Pisn8mpYneR15-0ncJxiawPHE9y989GKNeCIA_DjcQH7a5sByskcb7j5nid-Q');
+                  "
+                ></div>
+                <div class="p-3">
+                  <p
+                    class="font-bold text-sm text-gray-900 dark:text-white truncate"
+                  >
+                    Dip de Espinacas
+                  </p>
+                  <p class="text-base font-black text-primary mt-0.5">$10.50</p>
+                </div>
+              </div>
+
+              <div
+                onclick="showDishModal('Trío de Bruschettas', '$9.75', 'https://lh3.googleusercontent.com/aida-public/AB6AXuBROO6rUbilJSXSocicfsJjKKGWb7mhv3YlugbQ5YZUi74H9c0C80kvUODNqYHN7GxVVXlLh66S8hoq2UkYM4s8LcM3dXKuzIK7PrbvAfu48X1QwbsDFmiqMwLVMKjgHSaJBZrlWn759dfr4rfmDriOfykvBZhZtBRsOG5LIBOU2Cv1BvbYNMtEYVfzouz_bzeKSr0AhWg5Eg69Rxi85nhG1-Ahfq3m_ZN9KtzZJ4rvZFoamfhBmPOrv1HkX9RnHbCwqEQTAEI7ug', 'Tres deliciosas bruschettas con diferentes toppings: tomate albahaca, champiñones y pesto.')"
+                class="menu-item-card cursor-pointer rounded-xl bg-surface-light shadow-soft dark:bg-surface-dark overflow-hidden"
+              >
+                <div
+                  class="w-full aspect-square bg-cover bg-center"
+                  style="
+                    background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBROO6rUbilJSXSocicfsJjKKGWb7mhv3YlugbQ5YZUi74H9c0C80kvUODNqYHN7GxVVXlLh66S8hoq2UkYM4s8LcM3dXKuzIK7PrbvAfu48X1QwbsDFmiqMwLVMKjgHSaJBZrlWn759dfr4rfmDriOfykvBZhZtBRsOG5LIBOU2Cv1BvbYNMtEYVfzouz_bzeKSr0AhWg5Eg69Rxi85nhG1-Ahfq3m_ZN9KtzZJ4rvZFoamfhBmPOrv1HkX9RnHbCwqEQTAEI7ug');
+                  "
+                ></div>
+                <div class="p-3">
+                  <p
+                    class="font-bold text-sm text-gray-900 dark:text-white truncate"
+                  >
+                    Trío de Bruschettas
+                  </p>
+                  <p class="text-base font-black text-primary mt-0.5">$9.75</p>
+                </div>
+              </div>
+
+              <div
+                onclick="showDishModal('Ensalada Caprese', '$11.25', 'https://lh3.googleusercontent.com/aida-public/AB6AXuAAmFjQL_e-zmnKuNCY_1bHER-4eIuPrxFW3bHoB88mPw7HBgQto15kHo7LIPQtiybY7JDhsDWaplaBEJXPSbxO4DX_7vdouYGb1DwZceGiNGZwS5QHRAgV7-nKvt5littJOmq835QvZtcOIiZedg3eV6XNJ-_dFF2-L_ObxlU2vH13LoXQTX7_z89ThOnfmfrV-Mq-RGeXa0cv2A3CxC1y7DaFh9zU23dFshkvKRJCcV4ysOR-n15lVrNTl6lgB4Hj0iesnZsfhw', 'Fresca ensalada con tomate, mozzarella, albahaca y aceite de oliva extra virgen.')"
+                class="menu-item-card cursor-pointer rounded-xl bg-surface-light shadow-soft dark:bg-surface-dark overflow-hidden"
+              >
+                <div
+                  class="w-full aspect-square bg-cover bg-center"
+                  style="
+                    background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuAAmFjQL_e-zmnKuNCY_1bHER-4eIuPrxFW3bHoB88mPw7HBgQto15kHo7LIPQtiybY7JDhsDWaplaBEJXPSbxO4DX_7vdouYGb1DwZceGiNGZwS5QHRAgV7-nKvt5littJOmq835QvZtcOIiZedg3eV6XNJ-_dFF2-L_ObxlU2vH13LoXQTX7_z89ThOnfmfrV-Mq-RGeXa0cv2A3CxC1y7DaFh9zU23dFshkvKRJCcV4ysOR-n15lVrNTl6lgB4Hj0iesnZsfhw');
+                  "
+                ></div>
+                <div class="p-3">
+                  <p
+                    class="font-bold text-sm text-gray-900 dark:text-white truncate"
+                  >
+                    Ensalada Caprese
+                  </p>
+                  <p class="text-base font-black text-primary mt-0.5">$11.25</p>
+                </div>
+              </div>
+
+              <div
+                onclick="showDishModal('Camarones Scampi', '$14.50', 'https://lh3.googleusercontent.com/aida-public/AB6AXuAmfpN8U200Yzwa4mOuzvW3YGDlATHPaDR_JwDLT4SfV9AmD6zAXT4YApo2MyYRrxbrGArwykobFT4e6JpgbAv0OXsGhvbpc71wSKN9Le7C7FoYZomMKD4PHCKRydtw7sRvwWKMo3bI1wiCJG_7ZEqUfyJHb81To5aiaZlP7FWVfVtKQXJDMSDyrZkLsD7QN3PrcOZx9ZQNyjY-Wsw28LybsPhNHjPDKujfKmGtGn18nGpg892z8TPLK-h3eVPTYj6At9mTwjJtHA', 'Camarones salteados en mantequilla, ajo, vino blanco y limón. Servidos con pan.')"
+                class="menu-item-card cursor-pointer rounded-xl bg-surface-light shadow-soft dark:bg-surface-dark overflow-hidden"
+              >
+                <div
+                  class="w-full aspect-square bg-cover bg-center"
+                  style="
+                    background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuAmfpN8U200Yzwa4mOuzvW3YGDlATHPaDR_JwDLT4SfV9AmD6zAXT4YApo2MyYRrxbrGArwykobFT4e6JpgbAv0OXsGhvbpc71wSKN9Le7C7FoYZomMKD4PHCKRydtw7sRvwWKMo3bI1wiCJG_7ZEqUfyJHb81To5aiaZlP7FWVfVtKQXJDMSDyrZkLsD7QN3PrcOZx9ZQNyjY-Wsw28LybsPhNHjPDKujfKmGtGn18nGpg892z8TPLK-h3eVPTYj6At9mTwjJtHA');
+                  "
+                ></div>
+                <div class="p-3">
+                  <p
+                    class="font-bold text-sm text-gray-900 dark:text-white truncate"
+                  >
+                    Camarones Scampi
+                  </p>
+                  <p class="text-base font-black text-primary mt-0.5">$14.50</p>
+                </div>
+              </div>
+
+              <div
+                onclick="showDishModal('Tartaletas de Champiñones', '$8.99', 'https://lh3.googleusercontent.com/aida-public/AB6AXuBk-HqhQd7M20a_XmtOuEl9XZk9mvq6UY34X5J1b-GOD0dD24G3pO_KpJYME-qqFaDAxh5UPpvrJ-ecnuaEcE1Tx1-Rh759UDyufoyyGVW2fQ-Z8MMzIXI236RuA40GEnmBwknd-ViYJIOAoP4qqWLlADdoBBqlEqcKDT0N6NkDR243h_NnivGAJAjDB6zxarIyPWPmYcFbpxifaKROE1Q5-JH9Y1Ftzro1iUoUvcaIl5_nEZXl_3g0jll4j5StKWWZxEb66NdWyQ', 'Mini tartaletas rellenas de champiñones salteados con hierbas y queso crema.')"
+                class="menu-item-card cursor-pointer rounded-xl bg-surface-light shadow-soft dark:bg-surface-dark overflow-hidden"
+              >
+                <div
+                  class="w-full aspect-square bg-cover bg-center"
+                  style="
+                    background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBk-HqhQd7M20a_XmtOuEl9XZk9mvq6UY34X5J1b-GOD0dD24G3pO_KpJYME-qqFaDAxh5UPpvrJ-ecnuaEcE1Tx1-Rh759UDyufoyyGVW2fQ-Z8MMzIXI236RuA40GEnmBwknd-ViYJIOAoP4qqWLlADdoBBqlEqcKDT0N6NkDR243h_NnivGAJAjDB6zxarIyPWPmYcFbpxifaKROE1Q5-JH9Y1Ftzro1iUoUvcaIl5_nEZXl_3g0jll4j5StKWWZxEb66NdWyQ');
+                  "
+                ></div>
+                <div class="p-3">
+                  <p
+                    class="font-bold text-sm text-gray-900 dark:text-white truncate"
+                  >
+                    Tartaletas de Champiñones
+                  </p>
+                  <p class="text-base font-black text-primary mt-0.5">$8.99</p>
+                </div>
+              </div>
+            </div>
+          </main>
+        </div>
+
+        <!-- Order Sidebar -->
+        <aside
+          id="cart-sidebar"
+          class="fixed lg:relative top-0 right-0 h-full lg:col-span-5 xl:col-span-4 w-full sm:w-96 lg:w-auto transform translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out z-40 col-span-12 flex flex-col border-l border-slate-200/80 bg-surface-light dark:border-slate-800/80 dark:bg-slate-900/70 overflow-hidden shadow-2xl lg:shadow-none"
+        >
+          <!-- Close button for mobile/tablet -->
+          <button
+            onclick="toggleCart()"
+            class="lg:hidden absolute top-4 right-4 z-50 h-10 w-10 rounded-full bg-red-500 hover:bg-red-600 text-white flex items-center justify-center transition-colors shadow-lg"
+          >
+            <span class="material-symbols-outlined">close</span>
+          </button>
+          <!-- Order Header - Fixed -->
+          <div
+            class="sticky top-0 z-20 border-b border-slate-200/80 px-4 py-3 dark:border-slate-800/80 bg-gradient-to-br from-primary/5 to-primary-dark/5 backdrop-blur-sm"
+          >
+            <div class="flex items-center gap-2 mb-0.5">
+              <span class="material-symbols-outlined text-primary text-xl"
+                >receipt_long</span
+              >
+              <h2 class="text-lg font-black text-gray-900 dark:text-white">
+                Comanda
+              </h2>
+            </div>
+            <p
+              class="text-xs font-medium text-text-light-secondary dark:text-text-dark-secondary"
+            >
+              Pedido Actual: Mesa 7
+            </p>
+          </div>
+
+          <!-- Order Items - Scrolleable -->
+          <div class="flex-1 space-y-2 overflow-y-auto p-3">
+            <!-- Order Item 1 -->
+            <div
+              class="order-item rounded-lg p-3 border border-slate-100 dark:border-slate-800"
+            >
+              <div class="flex items-center gap-3">
+                <img
+                  alt="Calamar Crujiente"
+                  class="h-14 w-14 shrink-0 rounded-lg object-cover ring-2 ring-primary/20"
+                  src="https://lh3.googleusercontent.com/aida-public/AB6AXuCmS4uxkhLi_r8FLukh7WnfYnZO_gmv7jgo-6U12ZY79V4XKEt65-uXPHxWwjsNb-aMR1R1VmIS5z6pt3Br653W-a9BGZBf8Cwdg6J9_VuoGapCObZq_0pXLlaUiFyFrH7n0IEXSDUgY7KeJPSUPLHKT9Rp5ua4bvg_GHZMfR_wTxQbEgqYbzKlVDvF1XS4W9fX6WDT-W1XJ9EA9imMYM-u3AZWJZPr-t3d8avsHwB_gViwwE9bev1XBvwPL-JddAMOk9N5yTJR2Q"
+                />
+                <div class="flex-1 min-w-0">
+                  <p
+                    class="font-bold text-sm text-gray-900 dark:text-white truncate"
+                  >
+                    Calamar Crujiente
+                  </p>
+                  <p class="text-sm font-black text-primary">$12.99</p>
+                </div>
+                <div class="flex items-center gap-1.5">
+                  <button
+                    class="quantity-btn flex h-7 w-7 items-center justify-center rounded-lg bg-slate-100 font-bold text-slate-700 dark:bg-slate-800 dark:text-slate-300"
+                  >
+                    <span class="material-symbols-outlined text-base"
+                      >remove</span
+                    >
+                  </button>
+                  <span
+                    class="w-6 text-center text-base font-black text-gray-900 dark:text-white"
+                    >1</span
+                  >
+                  <button
+                    class="quantity-btn flex h-7 w-7 items-center justify-center rounded-lg bg-slate-100 font-bold text-slate-700 dark:bg-slate-800 dark:text-slate-300"
+                  >
+                    <span class="material-symbols-outlined text-base">add</span>
+                  </button>
+                </div>
+                <button
+                  onclick="removeItem('Calamar Crujiente')"
+                  class="h-8 w-8 shrink-0 rounded-lg flex items-center justify-center text-slate-500 transition-all hover:bg-red-100 hover:text-red-600 dark:text-slate-400 dark:hover:bg-red-900/50 dark:hover:text-red-400"
+                >
+                  <span class="material-symbols-outlined text-lg">delete</span>
+                </button>
+              </div>
+              <div
+                class="mt-2 flex items-center gap-2 rounded-lg bg-amber-50 dark:bg-amber-900/20 p-2 border border-amber-200 dark:border-amber-800"
+              >
+                <span
+                  class="material-symbols-outlined text-sm text-amber-600 dark:text-amber-400"
+                  >edit_note</span
+                >
+                <p
+                  class="text-xs font-medium text-amber-900 dark:text-amber-200"
+                >
+                  Nota: sin picante
+                </p>
+                <button
+                  onclick="removeNote()"
+                  class="ml-auto h-6 w-6 rounded-lg flex items-center justify-center text-amber-600 hover:bg-amber-100 dark:text-amber-400 dark:hover:bg-amber-900/40"
+                >
+                  <span class="material-symbols-outlined text-sm">close</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Order Item 2 -->
+            <div
+              class="order-item rounded-lg p-3 border border-slate-100 dark:border-slate-800"
+            >
+              <div class="flex items-center gap-3">
+                <img
+                  alt="Dip de Espinacas"
+                  class="h-14 w-14 shrink-0 rounded-lg object-cover ring-2 ring-primary/20"
+                  src="https://lh3.googleusercontent.com/aida-public/AB6AXuDEQS0X0kZ3-AkcMWJ1h9ZTjnwcMTLObCKVTEtJpzx0lW4voIdAEWycl2rg8iSv6AlGHzja8nUoG9CzFGsBOGjFWo4VDUnfrqTzi0NnTZOfx9ImEVl8JYAFx-hBjR89AUGs8d3wHt0VuOzlnyDL7utxhY6jRT3gHOyA-Ec1KNyLI9U6G_CKnqnzu5xiF5kGxVl6wcouwVZ-skq65Pisn8mpYneR15-0ncJxiawPHE9y989GKNeCIA_DjcQH7a5sByskcb7j5nid-Q"
+                />
+                <div class="flex-1 min-w-0">
+                  <p
+                    class="font-bold text-sm text-gray-900 dark:text-white truncate"
+                  >
+                    Dip de Espinacas
+                  </p>
+                  <p class="text-sm font-black text-primary">$10.50</p>
+                </div>
+                <div class="flex items-center gap-1.5">
+                  <button
+                    class="quantity-btn flex h-7 w-7 items-center justify-center rounded-lg bg-slate-100 font-bold text-slate-700 dark:bg-slate-800 dark:text-slate-300"
+                  >
+                    <span class="material-symbols-outlined text-base"
+                      >remove</span
+                    >
+                  </button>
+                  <span
+                    class="w-6 text-center text-base font-black text-gray-900 dark:text-white"
+                    >2</span
+                  >
+                  <button
+                    class="quantity-btn flex h-7 w-7 items-center justify-center rounded-lg bg-slate-100 font-bold text-slate-700 dark:bg-slate-800 dark:text-slate-300"
+                  >
+                    <span class="material-symbols-outlined text-base">add</span>
+                  </button>
+                </div>
+                <button
+                  onclick="removeItem('Dip de Espinacas')"
+                  class="h-8 w-8 shrink-0 rounded-lg flex items-center justify-center text-slate-500 transition-all hover:bg-red-100 hover:text-red-600 dark:text-slate-400 dark:hover:bg-red-900/50 dark:hover:text-red-400"
+                >
+                  <span class="material-symbols-outlined text-lg">delete</span>
+                </button>
+              </div>
+              <div class="mt-2 flex items-center justify-end">
+                <button
+                  onclick="addNote('Dip de Espinacas')"
+                  class="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold text-primary hover:bg-primary/10 dark:hover:bg-primary/20"
+                >
+                  <span class="material-symbols-outlined text-sm"
+                    >add_notes</span
+                  >
+                  <span>Añadir nota</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Order Item 3 -->
+            <div
+              class="order-item rounded-lg p-3 border border-slate-100 dark:border-slate-800"
+            >
+              <div class="flex items-center gap-3">
+                <img
+                  alt="Trío de Bruschettas"
+                  class="h-14 w-14 shrink-0 rounded-lg object-cover ring-2 ring-primary/20"
+                  src="https://lh3.googleusercontent.com/aida-public/AB6AXuBROO6rUbilJSXSocicfsJjKKGWb7mhv3YlugbQ5YZUi74H9c0C80kvUODNqYHN7GxVVXlLh66S8hoq2UkYM4s8LcM3dXKuzIK7PrbvAfu48X1QwbsDFmiqMwLVMKjgHSaJBZrlWn759dfr4rfmDriOfykvBZhZtBRsOG5LIBOU2Cv1BvbYNMtEYVfzouz_bzeKSr0AhWg5Eg69Rxi85nhG1-Ahfq3m_ZN9KtzZJ4rvZFoamfhBmPOrv1HkX9RnHbCwqEQTAEI7ug"
+                />
+                <div class="flex-1 min-w-0">
+                  <p
+                    class="font-bold text-sm text-gray-900 dark:text-white truncate"
+                  >
+                    Trío de Bruschettas
+                  </p>
+                  <p class="text-sm font-black text-primary">$9.75</p>
+                </div>
+                <div class="flex items-center gap-1.5">
+                  <button
+                    class="quantity-btn flex h-7 w-7 items-center justify-center rounded-lg bg-slate-100 font-bold text-slate-700 dark:bg-slate-800 dark:text-slate-300"
+                  >
+                    <span class="material-symbols-outlined text-base"
+                      >remove</span
+                    >
+                  </button>
+                  <span
+                    class="w-6 text-center text-base font-black text-gray-900 dark:text-white"
+                    >1</span
+                  >
+                  <button
+                    class="quantity-btn flex h-7 w-7 items-center justify-center rounded-lg bg-slate-100 font-bold text-slate-700 dark:bg-slate-800 dark:text-slate-300"
+                  >
+                    <span class="material-symbols-outlined text-base">add</span>
+                  </button>
+                </div>
+                <button
+                  onclick="removeItem('Trío de Bruschettas')"
+                  class="h-8 w-8 shrink-0 rounded-lg flex items-center justify-center text-slate-500 transition-all hover:bg-red-100 hover:text-red-600 dark:text-slate-400 dark:hover:bg-red-900/50 dark:hover:text-red-400"
+                >
+                  <span class="material-symbols-outlined text-lg">delete</span>
+                </button>
+              </div>
+              <div class="mt-2 flex items-center justify-end">
+                <button
+                  onclick="addNote('Trío de Bruschettas')"
+                  class="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold text-primary hover:bg-primary/10 dark:hover:bg-primary/20"
+                >
+                  <span class="material-symbols-outlined text-sm"
+                    >add_notes</span
+                  >
+                  <span>Añadir nota</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Order Summary - Fixed at Bottom -->
+          <div
+            class="sticky bottom-0 z-20 border-t border-slate-200/80 bg-white dark:border-slate-800/80 dark:bg-slate-900/70 p-4 shadow-lg"
+          >
+            <div class="space-y-2.5">
+              <div
+                class="flex justify-between text-sm font-semibold text-gray-600 dark:text-gray-400"
+              >
+                <span>Subtotal</span>
+                <span>$43.74</span>
+              </div>
+              <div
+                class="flex justify-between text-sm font-semibold text-gray-600 dark:text-gray-400"
+              >
+                <span>IVA (16%)</span>
+                <span>$7.00</span>
+              </div>
+              <div
+                class="flex justify-between items-center text-lg font-black bg-primary/10 rounded-lg p-3"
+              >
+                <span class="text-gray-900 dark:text-white">Total</span>
+                <span class="text-primary text-2xl">$50.74</span>
+              </div>
+
+              <!-- Action Button -->
+              <button
+                onclick="sendToKitchen()"
+                class="primary-button w-full rounded-xl py-3.5 text-lg font-bold text-white mt-3"
+              >
+                <div class="flex items-center justify-center gap-2">
+                  <span class="material-symbols-outlined text-xl"
+                    >restaurant</span
+                  >
+                  <span>Enviar a Cocina</span>
+                </div>
+              </button>
+            </div>
+          </div>
+        </aside>
+      </div>
+
+      <!-- Floating Cart Button - Mobile/Tablet only -->
+      <button
+        onclick="toggleCart()"
+        class="lg:hidden fixed bottom-6 right-6 z-50 h-16 w-16 rounded-full bg-gradient-to-br from-primary to-primary-dark text-white flex items-center justify-center shadow-2xl hover:scale-110 transition-transform"
+      >
+        <span class="material-symbols-outlined text-3xl">shopping_cart</span>
+        <span
+          class="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full h-6 w-6 flex items-center justify-center"
+          >3</span
+        >
+      </button>
+
+      <!-- Backdrop for cart - Mobile/Tablet only -->
+      <div
+        id="cart-backdrop"
+        onclick="toggleCart()"
+        class="lg:hidden fixed inset-0 bg-black/60 z-30 hidden"
+      ></div>
+    </div>
+  </body>
+</html>

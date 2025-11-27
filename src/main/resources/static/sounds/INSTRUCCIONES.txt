@@ -1,0 +1,212 @@
+INSTRUCCIONES PARA AGREGAR SONIDOS DE NOTIFICACIÓN
+===================================================
+
+📁 UBICACIÓN
+------------
+Los archivos deben estar en:
+1. src/main/resources/static/sounds/notification.mp3 (Nuevos pedidos)
+2. src/main/resources/static/sounds/payment.mp3 (Pagos completados)
+
+
+📥 CÓMO AGREGAR LOS ARCHIVOS MP3
+---------------------------------
+
+1. Descarga DOS sonidos diferentes (ver opciones abajo):
+   - notification.mp3: Para nuevos pedidos (corto, urgente)
+   - payment.mp3: Para pagos exitosos (alegre, exitoso)
+
+2. Guárdalos con los nombres exactos:
+   - notification.mp3
+   - payment.mp3
+
+3. Colócalos en esta carpeta (src/main/resources/static/sounds/)
+
+4. Reinicia la aplicación si está corriendo
+
+
+🎵 CARACTERÍSTICAS RECOMENDADAS
+--------------------------------
+
+NOTIFICATION.MP3 (Nuevos Pedidos):
+- Formato: MP3
+- Duración: 1-2 segundos
+- Tamaño: < 50KB
+- Tipo: Ding, chime, alert (corto y llamativo)
+- Volumen en app: 50%
+
+PAYMENT.MP3 (Pago Exitoso):
+- Formato: MP3
+- Duración: 1-3 segundos
+- Tamaño: < 100KB
+- Tipo: Cash register, success chime, celebración
+- Volumen en app: 60%
+
+
+🎯 USO DE LOS SONIDOS
+----------------------
+
+NOTIFICATION.MP3 se reproduce cuando:
+✅ Chef Dashboard - Nuevo pedido creado
+✅ Chef Pending - Nuevo pedido creado
+✅ Chef Pending - Estado de pedido cambiado
+
+PAYMENT.MP3 se reproduce cuando:
+💰 Cashier - Orden marcada como PAGADA
+💰 Waiter - Orden marcada como PAGADA (vía WebSocket)
+
+
+🌐 SITIOS PARA DESCARGAR SONIDOS GRATUITOS
+-------------------------------------------
+
+Para NOTIFICATION.MP3 (Nuevos Pedidos):
+1. Mixkit - Notification Sounds
+   https://mixkit.co/free-sound-effects/notification/
+   Busca: "notification bell", "alert short"
+
+2. Freesound - Notification
+   https://freesound.org/search/?q=notification+sound
+   Busca: "notification", "ding", "chime"
+
+Para PAYMENT.MP3 (Pagos):
+1. Mixkit - Success Sounds
+   https://mixkit.co/free-sound-effects/
+   Busca: "success", "cash register", "coin"
+
+2. Freesound - Success/Money
+   https://freesound.org/search/?q=cash+register
+   Busca: "cash register", "payment success", "ka-ching"
+
+3. ZapSplat (Gratis, requiere registro)
+   https://www.zapsplat.com/
+   Busca: "cash register", "payment", "success chime"
+
+
+💡 SUGERENCIAS DE BÚSQUEDA
+---------------------------
+
+Para notification.mp3:
+- "notification sound"
+- "ding"
+- "chime"
+- "bell short"
+- "alert quick"
+
+Para payment.mp3:
+- "cash register"
+- "ka-ching"
+- "payment success"
+- "success chime"
+- "coin drop"
+- "register bell"
+
+
+🔧 CÓMO VERIFICAR QUE FUNCIONA
+-------------------------------
+
+NOTIFICATION.MP3:
+1. Coloca el archivo notification.mp3 en esta carpeta
+2. Reinicia la aplicación
+3. Login como Chef
+4. Abre la consola del navegador (F12)
+5. Desde otra ventana, crea un nuevo pedido
+6. En consola verás:
+   🔊 Attempting to play notification sound...
+   ✅ Sound played successfully
+7. Escucharás el sonido
+
+PAYMENT.MP3:
+1. Coloca el archivo payment.mp3 en esta carpeta
+2. Reinicia la aplicación
+3. Login como Cashier o Waiter
+4. Abre la consola del navegador (F12)
+5. Marca una orden como PAGADA
+6. En consola verás:
+   🔊 Attempting to play payment sound...
+   ✅ Payment sound played successfully
+7. Escucharás el sonido de pago
+
+
+⚠️ SOLUCIÓN DE PROBLEMAS
+-------------------------
+
+Si no suena NINGUNO:
+
+1. Verifica nombres exactos:
+   - notification.mp3 (minúsculas, sin espacios)
+   - payment.mp3 (minúsculas, sin espacios)
+
+2. Verifica ubicación:
+   src/main/resources/static/sounds/
+
+3. Verifica en consola del navegador (F12):
+   - Busca errores en rojo
+   - Busca mensajes "Audio file not found"
+
+4. Algunos navegadores bloquean audio automático:
+   - Haz clic en la página primero
+   - Interactúa con la aplicación antes
+
+5. Verifica volumen del navegador
+
+6. Prueba accediendo directamente:
+   - http://localhost:8080/sounds/notification.mp3
+   - http://localhost:8080/sounds/payment.mp3
+
+
+🎯 ARCHIVOS DE EJEMPLO
+-----------------------
+
+Si quieres generar tonos simples para probar (requiere ffmpeg):
+
+Notification (800Hz, 0.5 segundos):
+ffmpeg -f lavfi -i "sine=frequency=800:duration=0.5" notification.mp3
+
+Payment (Do mayor chord, 1.5 segundos):
+ffmpeg -f lavfi -i "sine=frequency=523.25:duration=1.5, sine=frequency=659.25:duration=1.5, sine=frequency=783.99:duration=1.5" -filter_complex amix=inputs=3 payment.mp3
+
+
+✅ CHECKLIST
+-------------
+[ ] notification.mp3 descargado
+[ ] payment.mp3 descargado
+[ ] Ambos archivos en: src/main/resources/static/sounds/
+[ ] Aplicación reiniciada
+[ ] Navegador abierto con consola (F12)
+[ ] notification.mp3 probado (crear pedido)
+[ ] payment.mp3 probado (marcar como pagado)
+
+
+📊 RESUMEN DE VISTAS AFECTADAS
+-------------------------------
+
+CON notification.mp3:
+✅ chef/dashboard.html
+✅ chef/orders/pending.html
+
+CON payment.mp3:
+💰 cashier/orders/list.html
+💰 waiter/orders/list.html
+
+
+📝 NOTAS ADICIONALES
+--------------------
+- notification.mp3 al 50% de volumen (0.5)
+- payment.mp3 al 60% de volumen (0.6)
+- Se reproducen vía WebSocket en tiempo real
+- Funcionan con notificaciones del navegador también
+- Los sonidos son opcionales - la app funciona sin ellos
+
+
+🆘 AYUDA
+--------
+Si después de seguir estos pasos no funciona:
+
+1. Revisa los logs de la aplicación
+2. Revisa la consola del navegador (F12)
+3. Verifica que los archivos existen:
+   - http://localhost:8080/sounds/notification.mp3
+   - http://localhost:8080/sounds/payment.mp3
+4. Verifica que el navegador permite audio automático
+5. Intenta hacer clic en la página antes de que suene
+
+
